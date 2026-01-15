@@ -1,0 +1,260 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users, CheckCircle, XCircle, Clock, Calendar, AlertCircle, Eye, FileText } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { AuthGuard } from "@/components/auth-guard"
+import { DashboardNav } from "@/components/dashboard-nav"
+import { FormationDetailsModal } from "@/components/formation-details-modal"
+import { useSchedule } from "@/contexts/schedule-context"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { approveDepartmentSchedule, rejectDepartmentSchedule } from "@/app/actions"
+
+export default function DepartmentPage() {
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const { scheduleMetadata, exams, approveByChef, rejectByChef } = useSchedule()
+  const [isApproving, setIsApproving] = useState(false)
+  const [isRejecting, setIsRejecting] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false)
+  const [dashboardData, setDashboardData] = useState<any>(null)
+
+  const fetchDashboard = () => {
+    if (user && user.department) {
+      fetch(`/api/department/dashboard?deptId=${user.department}`)
+        .then(res => res.json())
+        .then(data => setDashboardData(data))
+        .catch(err => console.error("Error loading department dashboard:", err))
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboard()
+  }, [user])
+
+  if (!dashboardData) {
+    return (
+      <AuthGuard requiredRole="department">
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <p>Chargement du tableau de bord...</p>
+        </div>
+      </AuthGuard>
+    )
+  }
+
+  const { department, stats, formations, conflits } = dashboardData
+
+  // Filtrer les examens du département
+  const departmentExams = exams.filter(exam => exam.department === department.name)
+
+  const handleApprove = async () => {
+    setIsApproving(true)
+    toast({
+      title: "Approbation en cours...",
+      description: "Validation de l'emploi du temps en cours.",
+    })
+    try {
+      await approveDepartmentSchedule(Number(user?.department));
+      toast({
+        title: "Emploi du temps approuvé !",
+        description: "L'emploi du temps a été approuvé et envoyé au Doyen pour validation finale.",
+        variant: "default",
+      })
+      fetchDashboard();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setIsApproving(false)
+    }
+  }
+
+  const handleReject = async () => {
+    setIsRejecting(true)
+    toast({
+      title: "Rejet en cours...",
+      description: "Rejet de l'emploi du temps en cours.",
+    })
+    try {
+      await rejectDepartmentSchedule(Number(user?.department), rejectionReason);
+      toast({
+        title: "Emploi du temps rejeté",
+        description: "L'emploi du temps a été rejeté. L'administrateur sera notifié.",
+        variant: "destructive",
+      })
+      setShowRejectDialog(false)
+      setRejectionReason("")
+      fetchDashboard();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setIsRejecting(false)
+    }
+  }
+
+  const validatedCount = formations.filter((f: any) => f.status === "validated").length
+
+  return (
+    <AuthGuard requiredRole="department">
+      <div className="min-h-screen bg-background">
+        <DashboardNav
+          title={`Chef de Département - ${department.name}`}
+          subtitle={`Validation et statistiques par formation • ${department.totalProfessors} professeurs • ${department.formations} formations`}
+        />
+        <div className="container mx-auto px-4 py-8">
+          {/* Notification animée en haut - très visible */}
+          {department.scheduleStatus === 'pending_chef' && (
+            <div className="mb-6 animate-pulse">
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 rounded-lg shadow-lg border-2 border-yellow-400">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-12 w-12">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <AlertCircle className="relative inline-flex h-12 w-12" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg">🔔 NOUVEAU : Emploi du Temps en Attente de Validation</h3>
+                    <p className="text-sm opacity-90">L'administrateur a soumis un nouvel emploi du temps. Votre approbation est requise avant envoi au Doyen.</p>
+                  </div>
+                  <Badge className="bg-white text-yellow-600 font-bold px-4 py-2 text-sm">ACTION REQUISE</Badge>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-6 md:grid-cols-4 mb-8">
+            {stats.map((stat: any, index: number) => (
+              <Card key={index}>
+                <CardHeader className="pb-2">
+                  <CardDescription className="text-xs">{stat.label}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Section d'approbation de l'EDT */}
+          {department.scheduleStatus === 'pending_chef' && (
+            <Card className="mb-8 border-2 border-yellow-500/50 bg-yellow-500/5">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-yellow-500" />
+                      Emploi du Temps en Attente d'Approbation
+                    </CardTitle>
+                    <CardDescription>
+                      Un nouvel emploi du temps a été généré et nécessite votre approbation avant d'être envoyé au Doyen.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                    En attente
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Statut actuel</p>
+                      <p className="font-medium">En attente Chef</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total examens</p>
+                      <p className="font-medium">{stats[0].value}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Département</p>
+                      <p className="font-medium">{department.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Action requise</p>
+                      <p className="font-medium text-yellow-600">Approbation</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button onClick={() => setShowScheduleDialog(true)} variant="outline" className="flex-1">
+                      <Eye className="mr-2 h-4 w-4" /> Voir le détail
+                    </Button>
+                    <Button onClick={handleApprove} disabled={isApproving} className="flex-1 bg-green-600 hover:bg-green-700">
+                      <CheckCircle className="mr-2 h-4 w-4" /> {isApproving ? "Approbation..." : "Approuver"}
+                    </Button>
+                    <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive" className="flex-1">
+                          <XCircle className="mr-2 h-4 w-4" /> Rejeter
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Rejeter l'emploi du temps</DialogTitle>
+                          <DialogDescription>Indiquez la raison du rejet. L'administrateur sera notifié.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <Label htmlFor="rejection-reason">Raison du rejet</Label>
+                            <Textarea id="rejection-reason" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="mt-2" />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Annuler</Button>
+                          <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectionReason.trim()}>
+                            {isRejecting ? "Rejet en cours..." : "Confirmer le rejet"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Formations du Département</CardTitle>
+                  <CardDescription>État de validation des emplois du temps par formation</CardDescription>
+                </div>
+                <Badge variant="outline" className="text-sm">
+                  {validatedCount}/{formations.length} validées
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {formations.map((f: any) => (
+                  <div key={f.name} className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold">{f.name}</h3>
+                        {f.status === "validated" && <Badge className="bg-green-500/10 text-green-500 border-green-500/20"><CheckCircle className="mr-1 h-3 w-3" /> Validé</Badge>}
+                        {f.status === "pending" && <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"><Clock className="mr-1 h-3 w-3" /> En attente</Badge>}
+                        {f.status === "draft" && <Badge variant="outline" className="text-muted-foreground"><FileText className="mr-1 h-3 w-3" /> Brouillon</Badge>}
+                        {f.status === "none" && <Badge variant="secondary" className="text-muted-foreground">Aucun examen</Badge>}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{f.exams} examens</span> <span>•</span> <span>{f.modules} modules</span> <span>•</span> <span>{f.students} étudiants</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AuthGuard>
+  )
+}

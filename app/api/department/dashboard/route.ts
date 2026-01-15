@@ -1,0 +1,20 @@
+// app/api/department/dashboard/route.ts
+import { NextResponse } from 'next/server';
+import { getDepartmentDashboard } from '@/app/actions';
+
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const deptId = searchParams.get('deptId');
+
+    if (!deptId) {
+        return NextResponse.json({ error: 'Missing department ID' }, { status: 400 });
+    }
+
+    try {
+        const data = await getDepartmentDashboard(parseInt(deptId));
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error('Error fetching department dashboard:', error);
+        return NextResponse.json({ error: 'Failed to fetch department data' }, { status: 500 });
+    }
+}

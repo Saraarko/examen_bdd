@@ -1,0 +1,6 @@
+id,professorNumber,firstName,lastName,email,password,departmentId,role
+1,PROF001,Martin,Ahmed,martin.ahmed@univ.edu,password123,1,professor
+2,PROF002,Dubois,Fatima,dubois.fatima@univ.edu,password123,1,professor
+3,PROF003,Bennani,Youssef,bennani.youssef@univ.edu,password123,2,professor
+4,PROF004,Belkacemi,Chef,belkacemi@gmail.com,belkacemi123,1,chef_de_departement
+5,PROF005,Dr,Professeur,professeur@univ.ma,prof123,1,professor

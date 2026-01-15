@@ -1,0 +1,42 @@
+{
+    "kpis": {
+        "tempsGenerationEDT": 12.5,
+        "tauxOccupation": 82,
+        "conflitsResolus": 15,
+        "satisfactionEtudiants": 88
+    },
+    "conflits": [],
+    "salles": [
+        {
+            "id": "1",
+            "nom": "Amphi A",
+            "type": "amphitheatre",
+            "capacite": 300
+        },
+        {
+            "id": "2",
+            "nom": "Salle 101",
+            "type": "salle",
+            "capacite": 50
+        }
+    ],
+    "examens": [],
+    "etudiants": [],
+    "professeurs": [],
+    "departements": [
+        {
+            "id": "1",
+            "nom": "Informatique",
+            "code": "INFO"
+        }
+    ],
+    "formations": [
+        {
+            "id": "1",
+            "nom": "Licence Informatique",
+            "code": "L3-INFO",
+            "departement": "Informatique"
+        }
+    ],
+    "modules": []
+}

@@ -9,7 +9,7 @@ let db: any;
 
 try {
     db = new Database(dbPath);
-    // db.pragma('journal_mode = WAL'); // Optional but good for concurrency
+    db.pragma('journal_mode = WAL');
 } catch (error) {
     console.error("Failed to open database:", error);
 }

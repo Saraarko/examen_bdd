@@ -186,41 +186,56 @@ export async function authenticateUser(email: string, password: string, role: st
 }
 
 export async function getAdminDashboard() {
+    console.log('[getAdminDashboard] Starting fetch...');
     if (!db) throw new Error("Database not connected");
 
-    const kpis = db.prepare('SELECT * FROM KPI').get();
-    const nbExams = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get().count;
-    if (kpis) kpis.nbExamensPlanifies = nbExams;
+    const start = Date.now();
 
-    const conflits = db.prepare('SELECT * FROM Conflict').all();
-    const salles = db.prepare('SELECT * FROM ExamRoom').all();
-    const university = db.prepare('SELECT * FROM UniversityInfo').get();
-    const departments = db.prepare('SELECT * FROM Department').all();
+    try {
+        const kpis = db.prepare('SELECT * FROM KPI').get();
+        const nbExamsQuery = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get();
+        const nbExams = nbExamsQuery ? nbExamsQuery.count : 0;
+        if (kpis) kpis.nbExamensPlanifies = nbExams;
 
-    // Map departments to include some stats
-    const departmentsWithStats = departments.map((dept: any) => {
-        const profCount = db.prepare('SELECT COUNT(*) as count FROM Professor WHERE departmentId = ?').get(dept.id).count;
-        const formationCount = db.prepare('SELECT COUNT(*) as count FROM Formation WHERE departmentId = ?').get(dept.id).count;
-        const studentCount = db.prepare(`
-            SELECT COUNT(*) as count FROM Student s
-            JOIN Formation f ON s.formationId = f.id
-            WHERE f.departmentId = ?
-        `).get(dept.id).count;
+        const conflits = db.prepare('SELECT * FROM Conflict').all();
+        const salles = db.prepare('SELECT * FROM ExamRoom').all();
+        const university = db.prepare('SELECT * FROM UniversityInfo').get();
+        const departments = db.prepare('SELECT * FROM Department').all();
+
+        console.log('[getAdminDashboard] Structural data fetched. Mapping departments...');
+
+        // Map departments to include some stats
+        const departmentsWithStats = departments.map((dept: any) => {
+            const profCount = db.prepare('SELECT COUNT(*) as count FROM Professor WHERE departmentId = ?').get(dept.id).count;
+            const formationCount = db.prepare('SELECT COUNT(*) as count FROM Formation WHERE departmentId = ?').get(dept.id).count;
+            const studentCountQuery = db.prepare(`
+                SELECT COUNT(*) as count FROM Student s
+                JOIN Formation f ON s.formationId = f.id
+                WHERE f.departmentId = ?
+            `).get(dept.id);
+            const studentCount = studentCountQuery ? studentCountQuery.count : 0;
+
+            return {
+                ...dept,
+                totalProfessors: profCount,
+                formations: formationCount,
+                totalStudents: studentCount
+            };
+        });
+
+        console.log(`[getAdminDashboard] Completed in ${Date.now() - start}ms`);
+
         return {
-            ...dept,
-            totalProfessors: profCount,
-            formations: formationCount,
-            totalStudents: studentCount
+            kpis,
+            conflits,
+            salles,
+            university,
+            departments: departmentsWithStats
         };
-    });
-
-    return {
-        kpis,
-        conflits,
-        salles,
-        university,
-        departments: departmentsWithStats
-    };
+    } catch (e: any) {
+        console.error('[getAdminDashboard] FATAL ERROR:', e);
+        throw e;
+    }
 }
 
 export async function getDeanDashboard() {

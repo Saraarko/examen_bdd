@@ -15,7 +15,7 @@ import { generateAdminReportPDF } from "@/lib/admin-pdf-generator";
 import { useSchedule } from "@/contexts/schedule-context";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { generateAutoSchedule } from "@/app/actions";
+import { generateAutoSchedule, getAdminDashboard } from "@/app/actions";
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -26,35 +26,55 @@ export default function AdminPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
-  const fetchDashboard = () => {
-    fetch("/api/admin/dashboard")
-      .then((res) => res.json())
-      .then(setDashboard)
-      .catch((e) => console.error("Failed to load admin dashboard", e));
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const data = await getAdminDashboard();
+      if (data) {
+        setDashboard(data);
+      } else {
+        throw new Error("Aucune donnée reçue du serveur.");
+      }
+    } catch (e: any) {
+      console.error("Failed to load admin dashboard", e);
+      toast({
+        title: "Erreur de chargement",
+        description: e.message || "Impossible de charger les données du tableau de bord.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fetch dashboard data from API
+  // Fetch dashboard data from server action
   useEffect(() => {
     fetchDashboard();
     setCurrentYear(new Date().getFullYear());
     setMounted(true);
   }, []);
 
-  if (!dashboard) {
+  if (!mounted || (loading && !dashboard)) {
     return (
       <AuthGuard requiredRole="admin">
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
           <p className="text-muted-foreground">Chargement du tableau de bord…</p>
+          {!dashboard && mounted && (
+            <Button variant="outline" size="sm" onClick={fetchDashboard}>
+              Réessayer
+            </Button>
+          )}
         </div>
       </AuthGuard>
     );
   }
 
-  const { kpis, conflits, salles, university, departments } = dashboard;
+  const { kpis, conflits = [], salles = [], university, departments = [] } = dashboard;
 
-  const conflicts = conflits.map((c: any) => ({
+  const conflicts = (conflits || []).map((c: any) => ({
     id: c.id,
     type: c.type,
     message: c.message,

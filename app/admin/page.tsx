@@ -40,6 +40,7 @@ export default function AdminPage() {
       }
     } catch (e: any) {
       console.error("Failed to load admin dashboard", e);
+      setDashboard({ error: e.message || "Erreur de connexion serveur" });
       toast({
         title: "Erreur de chargement",
         description: e.message || "Impossible de charger les données du tableau de bord.",
@@ -61,12 +62,22 @@ export default function AdminPage() {
     return (
       <AuthGuard requiredRole="admin">
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-          <p className="text-muted-foreground">Chargement du tableau de bord…</p>
-          {!dashboard && mounted && (
-            <Button variant="outline" size="sm" onClick={fetchDashboard}>
-              Réessayer
-            </Button>
-          )}
+          <p className="text-muted-foreground">Chargement du tableau de bord...</p>
+          <p className="text-xs text-muted-foreground">Veuillez patienter pendant la récupération des données.</p>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  if (dashboard && dashboard.error) {
+    return (
+      <AuthGuard requiredRole="admin">
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+          <div className="text-red-500 font-bold">Erreur de chargement</div>
+          <p className="text-muted-foreground">{dashboard.error || "Une erreur inconnue est survenue."}</p>
+          <Button variant="outline" size="sm" onClick={fetchDashboard}>
+            Réessayer
+          </Button>
         </div>
       </AuthGuard>
     );

@@ -1,13 +1,13 @@
 id,name,code,description
-1,Département A,DEPT_1,Description du département 1
-2,Département B,DEPT_2,Description du département 2
-3,Département C,DEPT_3,Description du département 3
-4,Département D,DEPT_4,Description du département 4
-5,Département E,DEPT_5,Description du département 5
-6,Département F,DEPT_6,Description du département 6
-7,Département G,DEPT_7,Description du département 7
-8,Département H,DEPT_8,Description du département 8
-9,Département I,DEPT_9,Description du département 9
-10,Département J,DEPT_10,Description du département 10
-11,Département K,DEPT_11,Description du département 11
-12,Département L,DEPT_12,Description du département 12
+1,Informatique,INFO,Département d'Informatique
+2,Mathématiques,MATH,Département de Mathématiques
+3,Physique,PHYS,Département de Physique
+4,Chimie,CHIM,Département de Chimie
+5,Biologie,BIO,Département de Biologie
+6,Géologie,GEO,Département de Géologie
+7,Génie Civil,GCIV,Département de Génie Civil
+8,Génie Électrique,GELE,Département de Génie Électrique
+9,Génie Mécanique,GMEC,Département de Génie Mécanique
+10,Économie,ECON,Département d'Économie
+11,Gestion,GEST,Département de Gestion
+12,Langues,LANG,Département des Langues

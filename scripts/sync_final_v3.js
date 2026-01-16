@@ -46,7 +46,7 @@ try {
     console.log('Inserting exams...');
     const sessions = readCsv('exam_sessions.csv');
     const insSess = db.prepare('INSERT INTO ExamSession (id, moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    db.transaction(() => { for (const s of sessions) insSess.run(s.id, s.moduleId, s.examRoomId, s.professorId, s.sessionDate, s.startTime, s.endTime, s.duration, s.type, 'PUBLISHED'); })();
+    db.transaction(() => { for (const s of sessions) insSess.run(s.id, s.moduleId, s.examRoomId, s.professorId, s.sessionDate, s.startTime, s.endTime, s.duration, s.type, 'DRAFT'); })();
 
     // Enrollments
     console.log('Generating enrollments...');

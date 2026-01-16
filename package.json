@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "prisma generate && node scripts/sync_final_v3.js && next build",
+    "build": "prisma generate && npx prisma db push --accept-data-loss && node scripts/sync_final_v3.js && next build",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start"

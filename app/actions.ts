@@ -48,7 +48,7 @@ export async function getStudentPlanning(email: string) {
     JOIN Module m ON es.moduleId = m.id
     JOIN ExamRoom er ON es.examRoomId = er.id
     JOIN Professor p ON es.professorId = p.id
-    WHERE me.studentId = ? AND es.status = 'PUBLISHED'
+    WHERE me.studentId = ? AND es.status IN ('PUBLISHED', 'PENDING_DEAN', 'PENDING_CHEF')
     ORDER BY es.sessionDate ASC
   `).all(student.id);
 
@@ -96,7 +96,7 @@ export async function getTeacherPlanning(email: string) {
         JOIN Module m ON es.moduleId = m.id
         JOIN Formation f ON m.formationId = f.id
         JOIN ExamRoom er ON es.examRoomId = er.id
-        WHERE es.professorId = ? AND es.status = 'PUBLISHED'
+        WHERE es.professorId = ?
         ORDER BY es.sessionDate ASC
     `).all(prof.id);
 

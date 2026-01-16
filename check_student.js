@@ -1,0 +1,14 @@
+
+const Database = require('better-sqlite3');
+const path = require('path');
+const dbPath = path.join(process.cwd(), 'prisma/dev.db');
+const db = new Database(dbPath);
+
+const student = db.prepare('SELECT * FROM Student LIMIT 1').get();
+console.log('Sample Student:', student);
+
+const enrollments = db.prepare('SELECT * FROM ModuleEnrollment WHERE studentId = ?').all(student.id);
+console.log('Enrollments for Student:', enrollments);
+
+const examSessions = db.prepare('SELECT * FROM ExamSession WHERE moduleId IN (SELECT moduleId FROM ModuleEnrollment WHERE studentId = ?)').all(student.id);
+console.log('Exam Sessions for Student modules:', examSessions);

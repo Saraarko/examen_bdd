@@ -189,12 +189,9 @@ export async function getAdminDashboard() {
     console.log('[getAdminDashboard] Starting fetch...');
     if (!db) throw new Error("Database not connected");
 
-    const start = Date.now();
-
     try {
         const kpis = db.prepare('SELECT * FROM KPI').get();
-        const nbExamsQuery = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get();
-        const nbExams = nbExamsQuery ? nbExamsQuery.count : 0;
+        const nbExams = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get().count;
         if (kpis) kpis.nbExamensPlanifies = nbExams;
 
         const conflits = db.prepare('SELECT * FROM Conflict').all();
@@ -202,28 +199,29 @@ export async function getAdminDashboard() {
         const university = db.prepare('SELECT * FROM UniversityInfo').get();
         const departments = db.prepare('SELECT * FROM Department').all();
 
-        console.log('[getAdminDashboard] Structural data fetched. Mapping departments...');
+        // Optimized: Fetch all stats in single queries instead of looping
+        const profCounts = db.prepare('SELECT departmentId, COUNT(*) as count FROM Professor GROUP BY departmentId').all();
+        const formationCounts = db.prepare('SELECT departmentId, COUNT(*) as count FROM Formation GROUP BY departmentId').all();
+        const studentCounts = db.prepare(`
+            SELECT f.departmentId, COUNT(s.id) as count 
+            FROM Student s
+            JOIN Formation f ON s.formationId = f.id 
+            GROUP BY f.departmentId
+        `).all();
 
-        // Map departments to include some stats
-        const departmentsWithStats = departments.map((dept: any) => {
-            const profCount = db.prepare('SELECT COUNT(*) as count FROM Professor WHERE departmentId = ?').get(dept.id).count;
-            const formationCount = db.prepare('SELECT COUNT(*) as count FROM Formation WHERE departmentId = ?').get(dept.id).count;
-            const studentCountQuery = db.prepare(`
-                SELECT COUNT(*) as count FROM Student s
-                JOIN Formation f ON s.formationId = f.id
-                WHERE f.departmentId = ?
-            `).get(dept.id);
-            const studentCount = studentCountQuery ? studentCountQuery.count : 0;
+        // Create lookup maps
+        const profMap = new Map(profCounts.map((p: any) => [p.departmentId, p.count]));
+        const formMap = new Map(formationCounts.map((f: any) => [f.departmentId, f.count]));
+        const stuMap = new Map(studentCounts.map((s: any) => [s.departmentId, s.count]));
 
-            return {
-                ...dept,
-                totalProfessors: profCount,
-                formations: formationCount,
-                totalStudents: studentCount
-            };
-        });
+        const departmentsWithStats = departments.map((dept: any) => ({
+            ...dept,
+            totalProfessors: profMap.get(dept.id) || 0,
+            formations: formMap.get(dept.id) || 0,
+            totalStudents: stuMap.get(dept.id) || 0
+        }));
 
-        console.log(`[getAdminDashboard] Completed in ${Date.now() - start}ms`);
+        console.log('[getAdminDashboard] Fetch complete.');
 
         return {
             kpis,

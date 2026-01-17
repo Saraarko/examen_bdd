@@ -4,6 +4,6 @@ import path from 'path';
 
 const dbPath = path.join(process.cwd(), 'prisma/dev.db');
 const connection = new Database(dbPath);
-const adapter = new PrismaBetterSqlite3(connection);
+const adapter = new PrismaBetterSqlite3({ url: dbPath });
 
 export { adapter, connection };

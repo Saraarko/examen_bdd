@@ -464,34 +464,36 @@ async function updateConflicts() {
     // Clear old conflicts
     db.prepare('DELETE FROM Conflict').run();
 
-    // 1. Student Conflicts (Modules from same formation on the same day)
+    // 1. Student Conflicts (Multiple exams for the same formation on the same day)
     const studentConflicts = db.prepare(`
         SELECT 
-            es1.sessionDate, es1.startTime, f.name as formationName, d.name as deptName,
-            m1.name as module1, m2.name as module2
-        FROM ExamSession es1
-        JOIN ExamSession es2 ON es1.sessionDate = es2.sessionDate AND es1.id < es2.id
-        JOIN Module m1 ON es1.moduleId = m1.id
-        JOIN Module m2 ON es2.moduleId = m2.id
-        JOIN Formation f ON m1.formationId = f.id
+            es.sessionDate, f.name as formationName, d.name as deptName,
+            COUNT(*) as examCount,
+            GROUP_CONCAT(m.name, ' | ') as moduleNames
+        FROM ExamSession es
+        JOIN Module m ON es.moduleId = m.id
+        JOIN Formation f ON m.formationId = f.id
         JOIN Department d ON f.departmentId = d.id
-        WHERE m1.formationId = m2.formationId
+        GROUP BY es.sessionDate, f.id
+        HAVING COUNT(*) > 1
     `).all();
 
-    for (const c of studentConflicts) {
-        db.prepare(`
-            INSERT INTO Conflict (type, severite, message, details, departement)
-            VALUES (?, ?, ?, ?, ?)
-        `).run(
+    const insertConflict = db.prepare(`
+        INSERT INTO Conflict (type, severite, message, details, departement)
+        VALUES (?, ?, ?, ?, ?)
+    `);
+
+    for (const c of (studentConflicts as any[])) {
+        insertConflict.run(
             'Conflit Étudiant',
             'haute',
-            `Chevauchement pour la formation ${c.formationName}`,
-            `Modules ${c.module1} et ${c.module2} sont prévus le ${c.sessionDate} à ${c.startTime}`,
+            `Multiple examens (${c.examCount}) pour ${c.formationName} le ${c.sessionDate}`,
+            `Modules concernés : ${c.moduleNames}`,
             c.deptName
         );
     }
 
-    // 2. Room Conflicts
+    // 2. Room Conflicts (Same room at the same time)
     const roomConflicts = db.prepare(`
         SELECT 
             es1.sessionDate, es1.startTime, er.name as roomName, d.name as deptName,
@@ -500,25 +502,23 @@ async function updateConflicts() {
         JOIN ExamSession es2 ON es1.sessionDate = es2.sessionDate AND es1.startTime = es2.startTime AND es1.id < es2.id
         JOIN ExamRoom er ON es1.examRoomId = er.id
         JOIN Module m1 ON es1.moduleId = m1.id
+        JOIN Module m2 ON es2.moduleId = m2.id
         JOIN Formation f ON m1.formationId = f.id
         JOIN Department d ON f.departmentId = d.id
         WHERE es1.examRoomId = es2.examRoomId
     `).all();
 
-    for (const c of roomConflicts) {
-        db.prepare(`
-            INSERT INTO Conflict (type, severite, message, details, departement)
-            VALUES (?, ?, ?, ?, ?)
-        `).run(
+    for (const c of (roomConflicts as any[])) {
+        insertConflict.run(
             'Conflit Salle',
             'moyenne',
-            `Double réservation de la salle ${c.roomName}`,
-            `Utilisée pour ${c.module1} et ${c.module2} le ${c.sessionDate} à ${c.startTime}`,
+            `Double réservation : ${c.roomName}`,
+            `Utilisée pour "${c.module1}" et "${c.module2}" le ${c.sessionDate} à ${c.startTime}`,
             c.deptName
         );
     }
 
-    // 3. Professor Conflicts
+    // 3. Professor Conflicts (Same professor at the same time)
     const profConflicts = db.prepare(`
         SELECT 
             es1.sessionDate, es1.startTime, p.firstName, p.lastName, d.name as deptName,
@@ -527,20 +527,18 @@ async function updateConflicts() {
         JOIN ExamSession es2 ON es1.sessionDate = es2.sessionDate AND es1.startTime = es2.startTime AND es1.id < es2.id
         JOIN Professor p ON es1.professorId = p.id
         JOIN Module m1 ON es1.moduleId = m1.id
+        JOIN Module m2 ON es2.moduleId = m2.id
         JOIN Formation f ON m1.formationId = f.id
         JOIN Department d ON f.departmentId = d.id
         WHERE es1.professorId = es2.professorId
     `).all();
 
-    for (const c of profConflicts) {
-        db.prepare(`
-            INSERT INTO Conflict (type, severite, message, details, departement)
-            VALUES (?, ?, ?, ?, ?)
-        `).run(
+    for (const c of (profConflicts as any[])) {
+        insertConflict.run(
             'Conflit Enseignant',
             'moyenne',
-            `Surveillance simultanée pour Prof. ${c.lastName}`,
-            `Assigné à ${c.module1} et ${c.module2} le ${c.sessionDate} à ${c.startTime}`,
+            `Surveillance multiple : Prof. ${c.lastName}`,
+            `Assigné à "${c.module1}" et "${c.module2}" le ${c.sessionDate} à ${c.startTime}`,
             c.deptName
         );
     }

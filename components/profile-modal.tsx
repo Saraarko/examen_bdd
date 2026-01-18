@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import {
@@ -30,7 +29,6 @@ import {
   X
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
 export function ProfileModal() {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -39,11 +37,9 @@ export function ProfileModal() {
     firstName: user?.name?.split(' ')[0] || '',
     lastName: user?.name?.split(' ').slice(1).join(' ') || '',
     email: user?.email || `${user?.id}@univ.ma`,
-    phone: '+212 6XX XXX XXX', // Données mockées
+    phone: '+212 6XX XXX XXX',
   })
-
   if (!user) return null
-
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'admin':
@@ -58,7 +54,6 @@ export function ProfileModal() {
         return role
     }
   }
-
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
@@ -73,7 +68,6 @@ export function ProfileModal() {
         return 'bg-gray-500/10 text-gray-500 border-gray-500/20'
     }
   }
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -81,9 +75,7 @@ export function ProfileModal() {
       .join('')
       .toUpperCase()
   }
-
   const handleSaveProfile = () => {
-    // Simulation de sauvegarde
     toast({
       title: "Profil mis à jour",
       description: "Vos informations ont été sauvegardées avec succès.",
@@ -91,7 +83,6 @@ export function ProfileModal() {
     })
     setIsEditing(false)
   }
-
   const handleCancelEdit = () => {
     setEditForm({
       firstName: user.name?.split(' ')[0] || '',
@@ -101,7 +92,6 @@ export function ProfileModal() {
     })
     setIsEditing(false)
   }
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -122,9 +112,8 @@ export function ProfileModal() {
             Consultez et modifiez vos informations personnelles
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-6">
-          {/* Section Photo et Infos de Base */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Informations Générales</CardTitle>
@@ -137,7 +126,6 @@ export function ProfileModal() {
                     {getInitials(user.name || '')}
                   </AvatarFallback>
                 </Avatar>
-
                 <div className="flex-1 space-y-3">
                   <div>
                     <h3 className="text-xl font-semibold">{user.name}</h3>
@@ -145,7 +133,6 @@ export function ProfileModal() {
                       {getRoleDisplayName(user.role)}
                     </Badge>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {user.department && (
                       <div className="flex items-center gap-2">
@@ -166,8 +153,7 @@ export function ProfileModal() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Section Informations de Contact */}
+          {}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -211,7 +197,6 @@ export function ProfileModal() {
                     </div>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Nom</Label>
                   {isEditing ? (
@@ -227,7 +212,6 @@ export function ProfileModal() {
                     </div>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   {isEditing ? (
@@ -244,7 +228,6 @@ export function ProfileModal() {
                     </div>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="phone">Téléphone</Label>
                   {isEditing ? (
@@ -263,8 +246,7 @@ export function ProfileModal() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Section Informations Académiques */}
+          {}
           {(user.department || user.formation) && (
             <Card>
               <CardHeader>
@@ -284,7 +266,6 @@ export function ProfileModal() {
                       </div>
                     </div>
                   )}
-
                   {user.formation && (
                     <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                       <div className="p-2 bg-green-100 rounded-lg">
@@ -300,8 +281,7 @@ export function ProfileModal() {
               </CardContent>
             </Card>
           )}
-
-          {/* Section Statistiques (pour étudiants) */}
+          {}
           {user.role === 'student' && (
             <Card>
               <CardHeader>
@@ -330,8 +310,7 @@ export function ProfileModal() {
               </CardContent>
             </Card>
           )}
-
-          {/* Section ID Système */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Informations Système</CardTitle>

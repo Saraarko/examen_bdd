@@ -1,82 +1,1 @@
-const Database = require('better-sqlite3');
-const fs = require('fs');
-const path = require('path');
-
-const dbPath = path.join(__dirname, 'dev.db');
-const db = new Database(dbPath);
-
-function readCsv(filename) {
-    const filePath = path.join(__dirname, 'data', filename);
-    if (!fs.existsSync(filePath)) {
-        console.warn(`File not found: ${filename}`);
-        return [];
-    }
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const lines = fileContent.trim().split('\n');
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.trim());
-
-    return lines.slice(1).map(line => {
-        const values = [];
-        let current = '';
-        let inQuote = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"') {
-                inQuote = !inQuote;
-            } else if (char === ',' && !inQuote) {
-                values.push(current);
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        values.push(current);
-
-        return headers.reduce((obj, header, index) => {
-            let val = values[index]?.trim();
-            if (val?.startsWith('"') && val?.endsWith('"')) {
-                val = val.slice(1, -1);
-            }
-            obj[header] = val;
-            return obj;
-        }, {});
-    });
-}
-
-try {
-    console.log('Seeding Admins...');
-    const admins = readCsv('admins.csv');
-    const adminStmt = db.prepare('INSERT OR REPLACE INTO Admin (id, firstName, lastName, email, password) VALUES (?, ?, ?, ?, ?)');
-    for (const a of admins) {
-        if (!a.id) continue;
-        adminStmt.run(parseInt(a.id), a.firstName, a.lastName, a.email, a.password);
-    }
-    console.log(`✓ Seeded ${admins.length} admins`);
-
-    console.log('Seeding Deans...');
-    const deans = readCsv('deans.csv');
-    const deanStmt = db.prepare('INSERT OR REPLACE INTO Dean (id, firstName, lastName, email, password, title) VALUES (?, ?, ?, ?, ?, ?)');
-    for (const d of deans) {
-        if (!d.id) continue;
-        deanStmt.run(parseInt(d.id), d.firstName, d.lastName, d.email, d.password, d.title);
-    }
-    console.log(`✓ Seeded ${deans.length} deans`);
-
-    console.log('Updating Professors with role...');
-    const professors = readCsv('professors.csv');
-    const profStmt = db.prepare('UPDATE Professor SET role = ? WHERE id = ?');
-    for (const p of professors) {
-        if (!p.id || !p.role) continue;
-        profStmt.run(p.role, parseInt(p.id));
-    }
-    console.log(`✓ Updated ${professors.length} professors with roles`);
-
-    console.log('\n✅ Seeding completed successfully!');
-} catch (error) {
-    console.error('❌ Seeding failed:', error.message);
-    process.exit(1);
-} finally {
-    db.close();
-}
+const Database = require('better-sqlite3');const fs = require('fs');const path = require('path');const dbPath = path.join(__dirname, 'dev.db');const db = new Database(dbPath);function readCsv(filename) {    const filePath = path.join(__dirname, 'data', filename);    if (!fs.existsSync(filePath)) {        console.warn(`File not found: ${filename}`);        return [];    }    const fileContent = fs.readFileSync(filePath, 'utf-8');    const lines = fileContent.trim().split('\n');    if (lines.length < 2) return [];    const headers = lines[0].split(',').map(h => h.trim());    return lines.slice(1).map(line => {        const values = [];        let current = '';        let inQuote = false;        for (let i = 0; i < line.length; i++) {            const char = line[i];            if (char === '"') {                inQuote = !inQuote;            } else if (char === ',' && !inQuote) {                values.push(current);                current = '';            } else {                current += char;            }        }        values.push(current);        return headers.reduce((obj, header, index) => {            let val = values[index]?.trim();            if (val?.startsWith('"') && val?.endsWith('"')) {                val = val.slice(1, -1);            }            obj[header] = val;            return obj;        }, {});    });}try {    console.log('Seeding Admins...');    const admins = readCsv('admins.csv');    const adminStmt = db.prepare('INSERT OR REPLACE INTO Admin (id, firstName, lastName, email, password) VALUES (?, ?, ?, ?, ?)');    for (const a of admins) {        if (!a.id) continue;        adminStmt.run(parseInt(a.id), a.firstName, a.lastName, a.email, a.password);    }    console.log(`✓ Seeded ${admins.length} admins`);    console.log('Seeding Deans...');    const deans = readCsv('deans.csv');    const deanStmt = db.prepare('INSERT OR REPLACE INTO Dean (id, firstName, lastName, email, password, title) VALUES (?, ?, ?, ?, ?, ?)');    for (const d of deans) {        if (!d.id) continue;        deanStmt.run(parseInt(d.id), d.firstName, d.lastName, d.email, d.password, d.title);    }    console.log(`✓ Seeded ${deans.length} deans`);    console.log('Updating Professors with role...');    const professors = readCsv('professors.csv');    const profStmt = db.prepare('UPDATE Professor SET role = ? WHERE id = ?');    for (const p of professors) {        if (!p.id || !p.role) continue;        profStmt.run(p.role, parseInt(p.id));    }    console.log(`✓ Updated ${professors.length} professors with roles`);    console.log('\n✅ Seeding completed successfully!');} catch (error) {    console.error('❌ Seeding failed:', error.message);    process.exit(1);} finally {    db.close();}

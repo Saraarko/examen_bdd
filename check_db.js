@@ -1,13 +1,1 @@
-
-const Database = require('better-sqlite3');
-const path = require('path');
-const dbPath = path.join(process.cwd(), 'prisma/dev.db');
-const db = new Database(dbPath);
-
-const statuses = db.prepare('SELECT status, COUNT(*) as count FROM ExamSession GROUP BY status').all();
-console.log('--- ExamSession Statuses ---');
-statuses.forEach(s => console.log(`${s.status}: ${s.count}`));
-
-const examSessions = db.prepare('SELECT id, moduleId, professorId, status FROM ExamSession LIMIT 5').all();
-console.log('--- Sample ExamSessions ---');
-console.log(examSessions);
+const Database = require('better-sqlite3');const path = require('path');const dbPath = path.join(process.cwd(), 'prisma/dev.db');const db = new Database(dbPath);const statuses = db.prepare('SELECT status, COUNT(*) as count FROM ExamSession GROUP BY status').all();console.log('--- ExamSession Statuses ---');statuses.forEach(s => console.log(`${s.status}: ${s.count}`));const examSessions = db.prepare('SELECT id, moduleId, professorId, status FROM ExamSession LIMIT 5').all();console.log('--- Sample ExamSessions ---');console.log(examSessions);

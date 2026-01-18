@@ -1,6 +1,4 @@
-// Admin dashboard – client component using DB data via API
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,7 +14,6 @@ import { useSchedule } from "@/contexts/schedule-context";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { generateAutoSchedule, getAdminDashboard } from "@/app/actions";
-
 export default function AdminPage() {
   const { toast } = useToast();
   const { generateSchedule, exams } = useSchedule();
@@ -28,7 +25,6 @@ export default function AdminPage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-
   const fetchDashboard = async () => {
     setLoading(true);
     try {
@@ -50,14 +46,11 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
-
-  // Fetch dashboard data from server action
   useEffect(() => {
     fetchDashboard();
     setCurrentYear(new Date().getFullYear());
     setMounted(true);
   }, []);
-
   if (!mounted || (loading && !dashboard)) {
     return (
       <AuthGuard requiredRole="admin">
@@ -68,7 +61,6 @@ export default function AdminPage() {
       </AuthGuard>
     );
   }
-
   if (dashboard && dashboard.error) {
     return (
       <AuthGuard requiredRole="admin">
@@ -82,9 +74,7 @@ export default function AdminPage() {
       </AuthGuard>
     );
   }
-
   const { kpis, conflits = [], salles = [], university, departments = [] } = dashboard;
-
   const conflicts = (conflits || []).map((c: any) => ({
     id: c.id,
     type: c.type,
@@ -93,10 +83,8 @@ export default function AdminPage() {
     dept: c.departement,
     details: c.details,
   }));
-
   const amphiCount = salles.filter((s: any) => s.name?.toLowerCase().includes("amphi")).length || 10;
   const salleCount = salles.filter((s: any) => !s.name?.toLowerCase().includes("amphi")).length || 30;
-
   const resources = [
     {
       name: "Amphithéâtres",
@@ -113,10 +101,7 @@ export default function AdminPage() {
       utilization: Math.round(((kpis?.sallesUtilisees ?? 0) / salleCount) * 100),
     },
   ];
-
   const unresolvedConflicts = conflicts.filter((c: any) => c.severity === "high").length;
-
-  // Handlers
   const handleGenerateSchedule = async () => {
     setIsGenerating(true);
     toast({ title: "Génération en cours...", description: "Génération automatique de l'emploi du temps en cours." });
@@ -132,7 +117,6 @@ export default function AdminPage() {
       setIsGenerating(false);
     }
   };
-
   const handleOptimizeResources = async () => {
     setIsOptimizing(true);
     toast({ title: "Optimisation en cours...", description: "Réoptimisation des ressources et salles en cours." });
@@ -140,7 +124,6 @@ export default function AdminPage() {
     setIsOptimizing(false);
     toast({ title: "Ressources optimisées !", description: "L'occupation des salles a été optimisée de 12%.", variant: "default" });
   };
-
   const handleExportPDF = async () => {
     setIsExporting(true);
     toast({ title: "Export en cours...", description: "Génération du rapport administratif au format PDF." });
@@ -172,7 +155,6 @@ export default function AdminPage() {
       setIsExporting(false);
     }
   };
-
   const handleVerifyConstraints = async () => {
     setIsVerifying(true);
     toast({ title: "Vérification en cours...", description: "Vérification de toutes les contraintes métier." });
@@ -180,7 +162,6 @@ export default function AdminPage() {
     setIsVerifying(false);
     toast({ title: "Toutes les contraintes respectées !", description: "Aucune violation détectée. Le planning est valide.", variant: "default" });
   };
-
   if (!mounted) {
     return (
       <AuthGuard requiredRole="admin">
@@ -190,13 +171,12 @@ export default function AdminPage() {
       </AuthGuard>
     );
   }
-
   return (
     <AuthGuard requiredRole="admin">
       <div className="min-h-screen bg-background">
         <DashboardNav title="Administrateur Examens" subtitle={`${university?.name ?? ""} - Vue stratégique globale et KPIs académiques`} />
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-          {/* KPI cards */}
+          {}
           <div className="grid gap-6 md:grid-cols-4 mb-8">
             <Card className="border-l-4 border-l-green-500">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -227,9 +207,8 @@ export default function AdminPage() {
               <CardContent><div className="text-2xl font-bold text-purple-500">94%</div></CardContent>
             </Card>
           </div>
-
           <div className="grid gap-6 lg:grid-cols-3 mb-8">
-            {/* Actions card */}
+            {}
             <Card className="lg:col-span-1 border-2 border-primary/20">
               <CardHeader>
                 <CardTitle className="text-lg">Actions Stratégiques</CardTitle>
@@ -260,8 +239,7 @@ export default function AdminPage() {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Resources card */}
+            {}
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="text-lg">Occupation des Ressources Globales</CardTitle>
@@ -290,9 +268,8 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </div>
-
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Conflicts List */}
+            {}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -322,8 +299,7 @@ export default function AdminPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Department stats */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Vue par Département</CardTitle>

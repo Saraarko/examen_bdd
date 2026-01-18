@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import {
   Dialog,
@@ -28,7 +27,6 @@ import {
   Eye
 } from "lucide-react"
 import mockData from "@/data/mock-data.json"
-
 interface FormationDetailsModalProps {
   formation: {
     name: string
@@ -40,7 +38,6 @@ interface FormationDetailsModalProps {
   }
   trigger?: React.ReactNode
 }
-
 interface Module {
   id: string
   name: string
@@ -50,7 +47,6 @@ interface Module {
   exams: number
   professor?: string
 }
-
 interface Exam {
   id: number
   date: string
@@ -60,11 +56,8 @@ interface Exam {
   students: number
   type: string
 }
-
 export function FormationDetailsModal({ formation, trigger }: FormationDetailsModalProps) {
   const [isOpen, setIsOpen] = useState(false)
-
-  // Données mockées pour les modules de cette formation
   const formationModules: Module[] = [
     {
       id: "1",
@@ -112,8 +105,6 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
       professor: "Dr. Karim Alaoui"
     }
   ]
-
-  // Filtrer les examens de cette formation depuis les données mockées
   const formationExams: Exam[] = mockData.examens
     .filter(exam => exam.formation === formation.name)
     .map(exam => ({
@@ -125,12 +116,9 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
       students: exam.nbEtudiants,
       type: exam.type
     }))
-
-  // Calculer les statistiques
   const totalCredits = formationModules.reduce((sum, module) => sum + module.credits, 0)
   const plannedExams = formationExams.length
   const totalExamStudents = formationExams.reduce((sum, exam) => sum + exam.students, 0)
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'validated':
@@ -158,7 +146,6 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
         return <Badge variant="outline">{status}</Badge>
     }
   }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -181,10 +168,9 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
             Détails complets de la formation et planification des examens
           </DialogDescription>
         </DialogHeader>
-
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
-            {/* Section Vue d'ensemble */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -225,14 +211,11 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                     </p>
                   </div>
                 </div>
-
                 <Separator className="my-4" />
-
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Statut de validation:</span>
                   {getStatusBadge(formation.status)}
                 </div>
-
                 {formation.conflicts > 0 && (
                   <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center gap-2 text-red-800">
@@ -245,8 +228,7 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                 )}
               </CardContent>
             </Card>
-
-            {/* Section Modules */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -259,7 +241,7 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Semestre 1 */}
+                  {}
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-3">Semestre 1</h4>
                     <div className="space-y-2">
@@ -285,8 +267,7 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                         ))}
                     </div>
                   </div>
-
-                  {/* Semestre 2 */}
+                  {}
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-3">Semestre 2</h4>
                     <div className="space-y-2">
@@ -315,8 +296,7 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                 </div>
               </CardContent>
             </Card>
-
-            {/* Section Examens planifiés */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -367,8 +347,7 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                 )}
               </CardContent>
             </Card>
-
-            {/* Section Progression */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Progression de Validation</CardTitle>
@@ -385,7 +364,6 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                     </div>
                     <Progress value={(plannedExams / formation.modules) * 100} className="h-2" />
                   </div>
-
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span>Couverture étudiants</span>
@@ -396,7 +374,6 @@ export function FormationDetailsModal({ formation, trigger }: FormationDetailsMo
                       className="h-2"
                     />
                   </div>
-
                   {formation.conflicts > 0 && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <p className="text-sm text-yellow-800">

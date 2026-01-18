@@ -1,51 +1,1 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-
-const dbPath = path.join(__dirname, 'dev.db');
-const db = new Database(dbPath);
-
-try {
-    // Create Admin table
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS Admin (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            firstName TEXT NOT NULL,
-            lastName TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        );
-    `);
-    console.log('✓ Created Admin table');
-
-    // Create Dean table
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS Dean (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            firstName TEXT NOT NULL,
-            lastName TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            title TEXT NOT NULL
-        );
-    `);
-    console.log('✓ Created Dean table');
-
-    // Add role column to Professor table
-    try {
-        db.exec(`ALTER TABLE Professor ADD COLUMN role TEXT DEFAULT 'professor';`);
-        console.log('✓ Added role column to Professor table');
-    } catch (e) {
-        if (e.message.includes('duplicate column')) {
-            console.log('✓ Role column already exists in Professor table');
-        } else {
-            throw e;
-        }
-    }
-
-    console.log('\n✅ Migration completed successfully!');
-} catch (error) {
-    console.error('❌ Migration failed:', error.message);
-    process.exit(1);
-} finally {
-    db.close();
-}
+const Database = require('better-sqlite3');const path = require('path');const dbPath = path.join(__dirname, 'dev.db');const db = new Database(dbPath);try {    db.exec(`        CREATE TABLE IF NOT EXISTS Admin (            id INTEGER PRIMARY KEY AUTOINCREMENT,            firstName TEXT NOT NULL,            lastName TEXT NOT NULL,            email TEXT UNIQUE NOT NULL,            password TEXT NOT NULL        );    `);    console.log('✓ Created Admin table');    db.exec(`        CREATE TABLE IF NOT EXISTS Dean (            id INTEGER PRIMARY KEY AUTOINCREMENT,            firstName TEXT NOT NULL,            lastName TEXT NOT NULL,            email TEXT UNIQUE NOT NULL,            password TEXT NOT NULL,            title TEXT NOT NULL        );    `);    console.log('✓ Created Dean table');    try {        db.exec(`ALTER TABLE Professor ADD COLUMN role TEXT DEFAULT 'professor';`);        console.log('✓ Added role column to Professor table');    } catch (e) {        if (e.message.includes('duplicate column')) {            console.log('✓ Role column already exists in Professor table');        } else {            throw e;        }    }    console.log('\n✅ Migration completed successfully!');} catch (error) {    console.error('❌ Migration failed:', error.message);    process.exit(1);} finally {    db.close();}

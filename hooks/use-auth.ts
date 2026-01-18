@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface User {
+export interface User {
   email: string
   id: string
   name: string
@@ -18,7 +18,6 @@ export function useAuth() {
   const router = useRouter()
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté au chargement
     const checkAuth = () => {
       try {
         const userData = localStorage.getItem('user')
@@ -27,12 +26,11 @@ export function useAuth() {
           setUser(parsedUser)
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification de l\'authentification:', error)
+        console.error("Erreur lors de la vérification de l'authentification:", error)
       } finally {
         setIsLoading(false)
       }
     }
-
     checkAuth()
   }, [])
 
@@ -49,14 +47,11 @@ export function useAuth() {
 
   const requireAuth = (requiredRole?: User['role']) => {
     if (isLoading) return null
-
     if (!user) {
       router.push('/login')
       return null
     }
-
     if (requiredRole && user.role !== requiredRole) {
-      // Rediriger vers le bon dashboard selon le rôle
       switch (user.role) {
         case 'admin':
           router.push('/admin')
@@ -78,7 +73,6 @@ export function useAuth() {
       }
       return null
     }
-
     return user
   }
 

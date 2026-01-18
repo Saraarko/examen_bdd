@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useTheme } from "next-themes"
@@ -37,13 +36,10 @@ import {
   CheckCircle,
   AlertTriangle
 } from "lucide-react"
-
 export default function SettingsPage() {
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
-
-  // États pour les paramètres
   const [personalInfo, setPersonalInfo] = useState({
     firstName: user?.name?.split(' ')[0] || '',
     lastName: user?.name?.split(' ').slice(1).join(' ') || '',
@@ -52,7 +48,6 @@ export default function SettingsPage() {
     bio: 'Étudiant en informatique passionné par les nouvelles technologies.',
     language: 'fr'
   })
-
   const [notifications, setNotifications] = useState({
     emailExams: true,
     emailReminders: true,
@@ -62,7 +57,6 @@ export default function SettingsPage() {
     pushUpdates: false,
     smsCritical: true
   })
-
   const [security, setSecurity] = useState({
     currentPassword: '',
     newPassword: '',
@@ -70,14 +64,12 @@ export default function SettingsPage() {
     twoFactorEnabled: false,
     sessionTimeout: '30'
   })
-
   const [accessibility, setAccessibility] = useState({
     highContrast: false,
     largeText: false,
     reduceMotion: false,
     screenReader: false
   })
-
   const [preferences, setPreferences] = useState({
     defaultView: 'calendar',
     timeFormat: '24h',
@@ -86,7 +78,6 @@ export default function SettingsPage() {
     autoSave: true,
     showTips: true
   })
-
   const handleSavePersonalInfo = () => {
     toast({
       title: "Informations sauvegardées",
@@ -94,7 +85,6 @@ export default function SettingsPage() {
       variant: "default",
     })
   }
-
   const handleSaveNotifications = () => {
     toast({
       title: "Préférences sauvegardées",
@@ -102,7 +92,6 @@ export default function SettingsPage() {
       variant: "default",
     })
   }
-
   const handleChangePassword = () => {
     if (security.newPassword !== security.confirmPassword) {
       toast({
@@ -112,7 +101,6 @@ export default function SettingsPage() {
       })
       return
     }
-
     if (security.newPassword.length < 8) {
       toast({
         title: "Erreur",
@@ -121,13 +109,11 @@ export default function SettingsPage() {
       })
       return
     }
-
     toast({
       title: "Mot de passe changé",
       description: "Votre mot de passe a été mis à jour avec succès.",
       variant: "default",
     })
-
     setSecurity(prev => ({
       ...prev,
       currentPassword: '',
@@ -135,7 +121,6 @@ export default function SettingsPage() {
       confirmPassword: ''
     }))
   }
-
   const handleSaveSecurity = () => {
     toast({
       title: "Paramètres de sécurité sauvegardés",
@@ -143,7 +128,6 @@ export default function SettingsPage() {
       variant: "default",
     })
   }
-
   const handleSaveAccessibility = () => {
     toast({
       title: "Paramètres d'accessibilité sauvegardés",
@@ -151,7 +135,6 @@ export default function SettingsPage() {
       variant: "default",
     })
   }
-
   const handleSavePreferences = () => {
     toast({
       title: "Préférences sauvegardées",
@@ -159,7 +142,6 @@ export default function SettingsPage() {
       variant: "default",
     })
   }
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -167,9 +149,7 @@ export default function SettingsPage() {
       .join('')
       .toUpperCase()
   }
-
   if (!user) return null
-
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">
@@ -177,7 +157,6 @@ export default function SettingsPage() {
           title="Paramètres"
           subtitle="Gérez vos préférences et paramètres personnels"
         />
-
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -193,7 +172,6 @@ export default function SettingsPage() {
               </Button>
             </Link>
           </div>
-
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="profile" className="flex items-center gap-2">
@@ -217,8 +195,7 @@ export default function SettingsPage() {
                 <span className="hidden sm:inline">Préférences</span>
               </TabsTrigger>
             </TabsList>
-
-            {/* Onglet Profil */}
+            {}
             <TabsContent value="profile" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -231,7 +208,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Avatar et informations de base */}
+                  {}
                   <div className="flex items-start gap-6">
                     <Avatar className="h-20 w-20">
                       <AvatarImage src="/placeholder-user.jpg" alt={user.name} />
@@ -239,7 +216,6 @@ export default function SettingsPage() {
                         {getInitials(user.name || '')}
                       </AvatarFallback>
                     </Avatar>
-
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="capitalize">
@@ -251,7 +227,6 @@ export default function SettingsPage() {
                           <Badge variant="secondary">{user.department}</Badge>
                         )}
                       </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="firstName">Prénom</Label>
@@ -287,7 +262,6 @@ export default function SettingsPage() {
                           />
                         </div>
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="language">Langue</Label>
                         <Select value={personalInfo.language} onValueChange={(value) => setPersonalInfo(prev => ({ ...prev, language: value }))}>
@@ -301,7 +275,6 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="bio">Biographie</Label>
                         <Textarea
@@ -314,9 +287,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="flex justify-end">
                     <Button onClick={handleSavePersonalInfo}>
                       <Save className="mr-2 h-4 w-4" />
@@ -326,8 +297,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Onglet Notifications */}
+            {}
             <TabsContent value="notifications" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -340,7 +310,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Notifications par email */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Mail className="h-4 w-4" />
@@ -382,10 +352,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Notifications push */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Smartphone className="h-4 w-4" />
@@ -427,10 +395,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Notifications SMS */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Smartphone className="h-4 w-4" />
@@ -450,9 +416,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="flex justify-end">
                     <Button onClick={handleSaveNotifications}>
                       <Save className="mr-2 h-4 w-4" />
@@ -462,8 +426,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Onglet Sécurité */}
+            {}
             <TabsContent value="security" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -476,7 +439,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Changement de mot de passe */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Key className="h-4 w-4" />
@@ -516,10 +479,8 @@ export default function SettingsPage() {
                       Changer le mot de passe
                     </Button>
                   </div>
-
                   <Separator />
-
-                  {/* Authentification à deux facteurs */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium">Authentification à deux facteurs</h4>
                     <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -540,10 +501,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Timeout de session */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium">Session et accès</h4>
                     <div className="space-y-3">
@@ -568,9 +527,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="flex justify-end">
                     <Button onClick={handleSaveSecurity}>
                       <Save className="mr-2 h-4 w-4" />
@@ -580,8 +537,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Onglet Apparence */}
+            {}
             <TabsContent value="appearance" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -594,7 +550,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Thème */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Monitor className="h-4 w-4" />
@@ -613,7 +569,6 @@ export default function SettingsPage() {
                         </div>
                         <div className="w-full h-8 bg-white border rounded"></div>
                       </div>
-
                       <div
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                           theme === 'dark' ? 'border-primary bg-primary/5' : 'border-muted'
@@ -626,7 +581,6 @@ export default function SettingsPage() {
                         </div>
                         <div className="w-full h-8 bg-gray-900 border rounded"></div>
                       </div>
-
                       <div
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                           theme === 'system' ? 'border-primary bg-primary/5' : 'border-muted'
@@ -641,10 +595,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Accessibilité */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <Eye className="h-4 w-4" />
@@ -705,9 +657,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="flex justify-end">
                     <Button onClick={handleSaveAccessibility}>
                       <Save className="mr-2 h-4 w-4" />
@@ -717,8 +667,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Onglet Préférences */}
+            {}
             <TabsContent value="preferences" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -731,7 +680,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Vue par défaut */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium">Interface</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -748,7 +697,6 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="timezone">Fuseau horaire</Label>
                         <Select value={preferences.timezone} onValueChange={(value) => setPreferences(prev => ({ ...prev, timezone: value }))}>
@@ -764,10 +712,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Formats */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium">Formats d'affichage</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -783,7 +729,6 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="date-format">Format date</Label>
                         <Select value={preferences.dateFormat} onValueChange={(value) => setPreferences(prev => ({ ...prev, dateFormat: value }))}>
@@ -797,7 +742,6 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="language">Langue</Label>
                         <Select value={personalInfo.language} onValueChange={(value) => setPersonalInfo(prev => ({ ...prev, language: value }))}>
@@ -813,10 +757,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Comportement */}
+                  {}
                   <div className="space-y-4">
                     <h4 className="font-medium">Comportement</h4>
                     <div className="space-y-3">
@@ -848,9 +790,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="flex justify-end">
                     <Button onClick={handleSavePreferences}>
                       <Save className="mr-2 h-4 w-4" />

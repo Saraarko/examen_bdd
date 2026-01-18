@@ -1,5 +1,4 @@
 "use client"
-
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,15 +15,12 @@ import { Badge } from "@/components/ui/badge"
 import { LogOut, User, Settings, GraduationCap } from "lucide-react"
 import { ProfileModal } from "@/components/profile-modal"
 import { ThemeToggle } from "@/components/theme-toggle"
-
 interface DashboardNavProps {
   title: string
   subtitle?: string
 }
-
 export function DashboardNav({ title, subtitle }: DashboardNavProps) {
   const { user, logout } = useAuth()
-
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'admin':
@@ -41,7 +37,6 @@ export function DashboardNav({ title, subtitle }: DashboardNavProps) {
         return role
     }
   }
-
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
@@ -58,7 +53,6 @@ export function DashboardNav({ title, subtitle }: DashboardNavProps) {
         return 'bg-gray-500/10 text-gray-500'
     }
   }
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -66,12 +60,11 @@ export function DashboardNav({ title, subtitle }: DashboardNavProps) {
       .join('')
       .toUpperCase()
   }
-
   return (
     <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo and Title */}
+          {}
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3">
               <div className="p-2 bg-blue-600 rounded-lg">
@@ -85,8 +78,7 @@ export function DashboardNav({ title, subtitle }: DashboardNavProps) {
               </div>
             </Link>
           </div>
-
-          {/* Theme Toggle & User Menu */}
+          {}
           <div className="flex items-center gap-4">
             <ThemeToggle />
             {user && (
@@ -101,7 +93,6 @@ export function DashboardNav({ title, subtitle }: DashboardNavProps) {
                     <span className="text-muted-foreground">• {user.department}</span>
                   )}
                 </div>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">

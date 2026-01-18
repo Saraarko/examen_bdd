@@ -1,46 +1,46 @@
 id,name,code,departmentId,level
-1,Formation 1,FORM_1,2,Licence
-2,Formation 2,FORM_2,3,Licence
-3,Formation 3,FORM_3,4,Licence
-4,Formation 4,FORM_4,5,Licence
-5,Formation 5,FORM_5,6,Licence
-6,Formation 6,FORM_6,7,Licence
-7,Formation 7,FORM_7,8,Licence
-8,Formation 8,FORM_8,9,Licence
-9,Formation 9,FORM_9,10,Licence
-10,Formation 10,FORM_10,11,Licence
-11,Formation 11,FORM_11,12,Licence
-12,Formation 12,FORM_12,1,Licence
-13,Formation 13,FORM_13,2,Licence
-14,Formation 14,FORM_14,3,Licence
-15,Formation 15,FORM_15,4,Licence
-16,Formation 16,FORM_16,5,Licence
-17,Formation 17,FORM_17,6,Licence
-18,Formation 18,FORM_18,7,Licence
-19,Formation 19,FORM_19,8,Licence
-20,Formation 20,FORM_20,9,Licence
-21,Formation 21,FORM_21,10,Licence
-22,Formation 22,FORM_22,11,Licence
-23,Formation 23,FORM_23,12,Licence
-24,Formation 24,FORM_24,1,Licence
-25,Formation 25,FORM_25,2,Licence
-26,Formation 26,FORM_26,3,Licence
-27,Formation 27,FORM_27,4,Licence
-28,Formation 28,FORM_28,5,Licence
-29,Formation 29,FORM_29,6,Licence
-30,Formation 30,FORM_30,7,Licence
-31,Formation 31,FORM_31,8,Licence
-32,Formation 32,FORM_32,9,Licence
-33,Formation 33,FORM_33,10,Licence
-34,Formation 34,FORM_34,11,Licence
-35,Formation 35,FORM_35,12,Licence
-36,Formation 36,FORM_36,1,Licence
-37,Formation 37,FORM_37,2,Licence
-38,Formation 38,FORM_38,3,Licence
-39,Formation 39,FORM_39,4,Licence
-40,Formation 40,FORM_40,5,Licence
-41,Formation 41,FORM_41,6,Licence
-42,Formation 42,FORM_42,7,Licence
-43,Formation 43,FORM_43,8,Licence
-44,Formation 44,FORM_44,9,Licence
-45,Formation 45,FORM_45,10,Licence
+1,Mathématiques Appliquées,MATH1,2,Licence
+2,Énergétique,ÉNER2,3,Licence
+3,Chimie Analytique,CHIM3,4,Licence
+4,Génétique,GÉNÉ4,5,Licence
+5,Géologie Appliquée,GÉOL5,6,Licence
+6,Travaux Publics,TRAV6,7,Licence
+7,Électronique,ÉLEC7,8,Licence
+8,Productique,PROD8,9,Licence
+9,Économie Appliquée,ÉCON9,10,Licence
+10,Marketing,MARK10,11,Licence
+11,Littérature Comparée,LITT11,12,Licence
+12,Systèmes d'Information,SYST12,1,Licence
+13,Statistiques,STAT13,2,Licence
+14,Énergétique,ÉNER14,3,Licence
+15,Chimie Analytique,CHIM15,4,Licence
+16,Génétique,GÉNÉ16,5,Licence
+17,Géologie Appliquée,GÉOL17,6,Licence
+18,Travaux Publics,TRAV18,7,Licence
+19,Électronique,ÉLEC19,8,Licence
+20,Productique,PROD20,9,Licence
+21,Économie Appliquée,ÉCON21,10,Licence
+22,Marketing,MARK22,11,Licence
+23,Littérature Comparée,LITT23,12,Licence
+24,Big Data,BIG 24,1,Licence
+25,Probabilités,PROB25,2,Licence
+26,Énergétique,ÉNER26,3,Licence
+27,Chimie Analytique,CHIM27,4,Licence
+28,Génétique,GÉNÉ28,5,Licence
+29,Géologie Appliquée,GÉOL29,6,Licence
+30,Travaux Publics,TRAV30,7,Licence
+31,Électronique,ÉLEC31,8,Licence
+32,Productique,PROD32,9,Licence
+33,Économie Appliquée,ÉCON33,10,Licence
+34,Marketing,MARK34,11,Licence
+35,Littérature Comparée,LITT35,12,Licence
+36,Informatique,INFO36,1,Licence
+37,Analyse Numérique,ANAL37,2,Licence
+38,Énergétique,ÉNER38,3,Licence
+39,Chimie Analytique,CHIM39,4,Licence
+40,Génétique,GÉNÉ40,5,Licence
+41,Géologie Appliquée,GÉOL41,6,Licence
+42,Travaux Publics,TRAV42,7,Licence
+43,Électronique,ÉLEC43,8,Licence
+44,Productique,PROD44,9,Licence
+45,Économie Appliquée,ÉCON45,10,Licence

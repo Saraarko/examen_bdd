@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import {
   Dialog,
@@ -31,7 +30,6 @@ import {
   RotateCcw
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
 interface OptimizationResult {
   category: string
   currentUsage: number
@@ -40,18 +38,14 @@ interface OptimizationResult {
   status: 'improved' | 'maintained' | 'warning'
   details: string
 }
-
 interface ResourceOptimizationModalProps {
   trigger?: React.ReactNode
 }
-
 export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModalProps) {
   const { toast } = useToast()
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([])
   const [isCompleted, setIsCompleted] = useState(false)
-
-  // Données d'optimisation simulées
   const initialResults: OptimizationResult[] = [
     {
       category: "Occupation Amphithéâtres",
@@ -94,18 +88,14 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
       details: "Meilleure distribution des surveillances entre enseignants"
     }
   ]
-
   const handleStartOptimization = async () => {
     setIsOptimizing(true)
     setIsCompleted(false)
     setOptimizationResults([])
-
     toast({
       title: "Optimisation en cours...",
       description: "Analyse des ressources et réallocation optimale en cours.",
     })
-
-    // Simulation des étapes d'optimisation
     const steps = [
       "Analyse de l'occupation actuelle...",
       "Identification des goulots d'étranglement...",
@@ -113,7 +103,6 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
       "Validation des contraintes...",
       "Application des optimisations..."
     ]
-
     for (let i = 0; i < steps.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       toast({
@@ -121,8 +110,6 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
         description: steps[i],
       })
     }
-
-    // Générer les résultats d'optimisation
     const results = initialResults.map(result => ({
       ...result,
       optimizedUsage: Math.max(70, Math.min(95, result.currentUsage + (Math.random() * 15 - 5))),
@@ -132,25 +119,20 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
       status: result.optimizedUsage > result.currentUsage ? 'improved' as const :
               result.optimizedUsage === result.currentUsage ? 'maintained' as const : 'warning' as const
     }))
-
     setOptimizationResults(results)
     setIsOptimizing(false)
     setIsCompleted(true)
-
     const avgImprovement = results.reduce((sum, r) => sum + r.improvement, 0) / results.length
-
     toast({
       title: "Optimisation terminée !",
       description: `Amélioration moyenne de ${avgImprovement.toFixed(1)}% sur toutes les ressources.`,
       variant: "default",
     })
   }
-
   const handleResetOptimization = () => {
     setOptimizationResults([])
     setIsCompleted(false)
   }
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'improved':
@@ -163,7 +145,6 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
         return <Info className="h-4 w-4 text-gray-600" />
     }
   }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'improved':
@@ -176,11 +157,9 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
         return 'text-gray-600'
     }
   }
-
   const overallImprovement = optimizationResults.length > 0
     ? optimizationResults.reduce((sum, r) => sum + r.improvement, 0) / optimizationResults.length
     : 0
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -203,10 +182,9 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
             Analyse détaillée et optimisation automatique de l'utilisation des ressources universitaires
           </DialogDescription>
         </DialogHeader>
-
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
-            {/* Section Contrôles */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -238,7 +216,6 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
                       Relancer l'analyse
                     </Button>
                   )}
-
                   {isCompleted && (
                     <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600" />
@@ -253,8 +230,7 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
                 </div>
               </CardContent>
             </Card>
-
-            {/* Section Résumé Global */}
+            {}
             {isCompleted && (
               <Card>
                 <CardHeader>
@@ -293,8 +269,7 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
                 </CardContent>
               </Card>
             )}
-
-            {/* Section Détails par Ressource */}
+            {}
             {optimizationResults.length > 0 && (
               <Card>
                 <CardHeader>
@@ -329,9 +304,7 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
                             </div>
                           </div>
                         </div>
-
                         <p className="text-sm text-muted-foreground mb-3">{result.details}</p>
-
                         <div className="space-y-2">
                           <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Utilisation actuelle</span>
@@ -354,8 +327,7 @@ export function ResourceOptimizationModal({ trigger }: ResourceOptimizationModal
                 </CardContent>
               </Card>
             )}
-
-            {/* Section Informations */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -46,7 +45,6 @@ import {
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useEffect } from "react"
-
 interface Exam {
   id: number
   moduleId: number
@@ -65,18 +63,15 @@ interface Exam {
   type: string
   status: 'DRAFT' | 'PENDING_CHEF' | 'PENDING_DEAN' | 'PUBLISHED'
 }
-
 interface Professor {
   id: number
   name: string
 }
-
 interface Room {
   id: number
   name: string
   capacite: number
 }
-
 interface DBData {
   departments: string[]
   rooms: Room[]
@@ -84,7 +79,6 @@ interface DBData {
   formations: string[]
   modules: { id: number; name: string; code: string }[]
 }
-
 interface NewExamForm {
   moduleId: string
   formationId: string
@@ -97,10 +91,8 @@ interface NewExamForm {
   studentCount: number
   type: string
 }
-
 export default function AdminSchedulePage() {
   const { toast } = useToast()
-
   const [dbData, setDbData] = useState<DBData>({
     departments: [],
     rooms: [],
@@ -108,11 +100,9 @@ export default function AdminSchedulePage() {
     formations: [],
     modules: []
   })
-
   const [exams, setExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-
   const refreshData = async () => {
     setLoading(true)
     try {
@@ -133,21 +123,16 @@ export default function AdminSchedulePage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     refreshData()
     setMounted(true)
   }, [])
-
   const departments = dbData.departments
   const rooms = dbData.rooms
   const professors = dbData.professors
   const formations = dbData.formations
   const modules = dbData.modules
-
-  // Si pas d'examens générés, commencer avec une liste vide (ou fetch depuis DB si on implèmentera getExams)
   const displayExams = exams
-
   const [isAddingExam, setIsAddingExam] = useState(false)
   const [editingExam, setEditingExam] = useState<Exam | null>(null)
   const [newExam, setNewExam] = useState<NewExamForm>({
@@ -162,9 +147,7 @@ export default function AdminSchedulePage() {
     studentCount: 0,
     type: 'Écrit'
   })
-
   const examTypes = ["Écrit", "Oral", "TP", "Projet"]
-
   const handleAddExam = async () => {
     if (!newExam.moduleId || !newExam.date || !newExam.startTime || !newExam.endTime ||
       !newExam.roomId || !newExam.professorId) {
@@ -175,8 +158,6 @@ export default function AdminSchedulePage() {
       })
       return
     }
-
-    // Client-side conflict check (optional)
     const conflict = checkForConflicts(newExam)
     if (conflict) {
       toast({
@@ -186,7 +167,6 @@ export default function AdminSchedulePage() {
       })
       return
     }
-
     try {
       await createExam({
         moduleId: parseInt(newExam.moduleId),
@@ -198,7 +178,6 @@ export default function AdminSchedulePage() {
         duration: calculateDuration(newExam.startTime, newExam.endTime),
         type: newExam.type
       })
-
       toast({
         title: "Examen ajouté",
         description: "L'examen a été enregistré en tant que brouillon.",
@@ -213,12 +192,11 @@ export default function AdminSchedulePage() {
       })
     }
   }
-
   const handleEditExam = (exam: Exam) => {
     setEditingExam(exam)
     setNewExam({
       moduleId: exam.moduleId.toString(),
-      formationId: "", // Not strictly needed for edit
+      formationId: "",
       departmentId: "",
       date: new Date(exam.sessionDate),
       startTime: exam.startTime,
@@ -229,10 +207,8 @@ export default function AdminSchedulePage() {
       type: exam.type
     })
   }
-
   const handleUpdateExam = async () => {
     if (!editingExam) return
-
     try {
       await updateExamAction(editingExam.id, {
         moduleId: parseInt(newExam.moduleId),
@@ -245,7 +221,6 @@ export default function AdminSchedulePage() {
         type: newExam.type,
         status: editingExam.status
       })
-
       toast({
         title: "Examen modifié",
         description: "Mise à jour réussie.",
@@ -260,7 +235,6 @@ export default function AdminSchedulePage() {
       })
     }
   }
-
   const handleDeleteExam = async (examId: number) => {
     try {
       await deleteExamAction(examId)
@@ -275,7 +249,6 @@ export default function AdminSchedulePage() {
       })
     }
   }
-
   const handleSubmitAll = async () => {
     try {
       await submitAllDraftExams()
@@ -291,7 +264,6 @@ export default function AdminSchedulePage() {
       })
     }
   }
-
   const handleAutoGenerate = async () => {
     setLoading(true)
     try {
@@ -313,7 +285,6 @@ export default function AdminSchedulePage() {
       setLoading(false)
     }
   }
-
   const handleOptimizeConflicts = async () => {
     setLoading(true)
     try {
@@ -335,12 +306,8 @@ export default function AdminSchedulePage() {
       setLoading(false)
     }
   }
-
-
   const checkForConflicts = (newExamData: NewExamForm, existingExams = exams): string | null => {
     const examDate = newExamData.date ? format(newExamData.date, 'yyyy-MM-dd') : ''
-
-    // Vérifier conflits de salle
     const roomConflict = existingExams.find(exam =>
       exam.sessionDate === examDate &&
       exam.examRoomId.toString() === newExamData.roomId &&
@@ -350,12 +317,9 @@ export default function AdminSchedulePage() {
         (newExamData.startTime <= exam.startTime && newExamData.endTime >= exam.endTime)
       )
     )
-
     if (roomConflict) {
       return `Conflit de salle: ${roomConflict.room} occupée par ${roomConflict.moduleName}`
     }
-
-    // Vérifier conflits de professeur
     const professorConflict = existingExams.find(exam =>
       exam.sessionDate === examDate &&
       exam.professorId.toString() === newExamData.professorId &&
@@ -365,27 +329,21 @@ export default function AdminSchedulePage() {
         (newExamData.startTime <= exam.startTime && newExamData.endTime >= exam.endTime)
       )
     )
-
     if (professorConflict) {
       return `Conflit de professeur: ${professorConflict.professor} occupé par ${professorConflict.moduleName}`
     }
-
-    // Vérifier capacité de la salle
     const selectedRoom = rooms.find(r => r.id.toString() === newExamData.roomId)
     if (selectedRoom && newExamData.studentCount > selectedRoom.capacite) {
       return `Capacité insuffisante: ${selectedRoom.name} ne peut accueillir que ${selectedRoom.capacite} étudiants`
     }
-
     return null
   }
-
   const calculateDuration = (startTime: string, endTime: string): number => {
     if (!startTime || !endTime) return 0
     const start = new Date(`2000-01-01T${startTime}`)
     const end = new Date(`2000-01-01T${endTime}`)
     return Math.round((end.getTime() - start.getTime()) / (1000 * 60))
   }
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PUBLISHED':
@@ -398,11 +356,9 @@ export default function AdminSchedulePage() {
         return <Badge variant="outline">Brouillon</Badge>
     }
   }
-
   const confirmedExams = exams.filter(e => e.status === 'PUBLISHED').length
   const plannedExams = exams.filter(e => e.status === 'DRAFT').length
   const totalStudents = exams.reduce((sum, exam) => sum + (Number(exam.studentCount) || 0), 0)
-
   if (!mounted) {
     return (
       <AuthGuard requiredRole="admin">
@@ -412,7 +368,6 @@ export default function AdminSchedulePage() {
       </AuthGuard>
     )
   }
-
   return (
     <AuthGuard requiredRole="admin">
       <div className="min-h-screen bg-background">
@@ -420,7 +375,6 @@ export default function AdminSchedulePage() {
           title="Planification Manuelle"
           subtitle="Gestion détaillée des examens et conflits"
         />
-
         <div className="container mx-auto px-4 py-8">
           {loading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
@@ -430,7 +384,7 @@ export default function AdminSchedulePage() {
               </div>
             </div>
           )}
-          {/* En-tête avec statistiques */}
+          {}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="p-4">
@@ -443,7 +397,6 @@ export default function AdminSchedulePage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -455,7 +408,6 @@ export default function AdminSchedulePage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -467,7 +419,6 @@ export default function AdminSchedulePage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -480,8 +431,7 @@ export default function AdminSchedulePage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Actions principales */}
+          {}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Gestion des Examens</h2>
@@ -489,7 +439,6 @@ export default function AdminSchedulePage() {
                 Planifiez, modifiez et validez manuellement les examens
               </p>
             </div>
-
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -499,7 +448,6 @@ export default function AdminSchedulePage() {
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 Générer automatiquement
               </Button>
-
               <Button
                 variant="outline"
                 onClick={handleOptimizeConflicts}
@@ -508,7 +456,6 @@ export default function AdminSchedulePage() {
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 Optimiser les conflits
               </Button>
-
               <Button
                 variant="outline"
                 onClick={handleSubmitAll}
@@ -518,7 +465,6 @@ export default function AdminSchedulePage() {
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Soumettre tout
               </Button>
-
               <Dialog open={isAddingExam} onOpenChange={setIsAddingExam}>
                 <DialogTrigger asChild>
                   <Button>
@@ -533,7 +479,6 @@ export default function AdminSchedulePage() {
                       Remplissez les informations pour planifier un nouvel examen
                     </DialogDescription>
                   </DialogHeader>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="moduleId">Module *</Label>
@@ -550,8 +495,6 @@ export default function AdminSchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-
-
                     <div className="space-y-2">
                       <Label>Date *</Label>
                       <Popover>
@@ -571,7 +514,6 @@ export default function AdminSchedulePage() {
                         </PopoverContent>
                       </Popover>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="startTime">Heure de début *</Label>
                       <Input
@@ -581,7 +523,6 @@ export default function AdminSchedulePage() {
                         onChange={(e) => setNewExam(prev => ({ ...prev, startTime: e.target.value }))}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="endTime">Heure de fin *</Label>
                       <Input
@@ -591,7 +532,6 @@ export default function AdminSchedulePage() {
                         onChange={(e) => setNewExam(prev => ({ ...prev, endTime: e.target.value }))}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="room">Salle *</Label>
                       <Select value={newExam.roomId} onValueChange={(value) => setNewExam(prev => ({ ...prev, roomId: value }))}>
@@ -607,7 +547,6 @@ export default function AdminSchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="professor">Professeur *</Label>
                       <Select value={newExam.professorId} onValueChange={(value) => setNewExam(prev => ({ ...prev, professorId: value }))}>
@@ -623,7 +562,6 @@ export default function AdminSchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="studentCount">Nombre d'étudiants</Label>
                       <Input
@@ -634,7 +572,6 @@ export default function AdminSchedulePage() {
                         placeholder="Ex: 45"
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="type">Type d'examen</Label>
                       <Select value={newExam.type} onValueChange={(value) => setNewExam(prev => ({ ...prev, type: value }))}>
@@ -651,7 +588,6 @@ export default function AdminSchedulePage() {
                       </Select>
                     </div>
                   </div>
-
                   <div className="flex justify-end gap-2 mt-6">
                     <Button variant="outline" onClick={() => setIsAddingExam(false)}>
                       Annuler
@@ -663,7 +599,6 @@ export default function AdminSchedulePage() {
                   </div>
                 </DialogContent>
               </Dialog>
-
               <Link href="/admin">
                 <Button variant="outline">
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -672,8 +607,7 @@ export default function AdminSchedulePage() {
               </Link>
             </div>
           </div>
-
-          {/* Tableau des examens */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Examens Planifiés</CardTitle>
@@ -771,8 +705,7 @@ export default function AdminSchedulePage() {
               </ScrollArea>
             </CardContent>
           </Card>
-
-          {/* Modal d'édition */}
+          {}
           {editingExam && (
             <Dialog open={!!editingExam} onOpenChange={() => setEditingExam(null)}>
               <DialogContent className="max-w-2xl">
@@ -782,7 +715,6 @@ export default function AdminSchedulePage() {
                     Modifiez les informations de l'examen sélectionné
                   </DialogDescription>
                 </DialogHeader>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-moduleId">Module *</Label>
@@ -799,7 +731,6 @@ export default function AdminSchedulePage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Date *</Label>
                     <Popover>
@@ -819,7 +750,6 @@ export default function AdminSchedulePage() {
                       </PopoverContent>
                     </Popover>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="edit-startTime">Heure de début *</Label>
                     <Input
@@ -829,7 +759,6 @@ export default function AdminSchedulePage() {
                       onChange={(e) => setNewExam(prev => ({ ...prev, startTime: e.target.value }))}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="edit-endTime">Heure de fin *</Label>
                     <Input
@@ -839,7 +768,6 @@ export default function AdminSchedulePage() {
                       onChange={(e) => setNewExam(prev => ({ ...prev, endTime: e.target.value }))}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="edit-room">Salle *</Label>
                     <Select value={newExam.roomId} onValueChange={(value) => setNewExam(prev => ({ ...prev, roomId: value }))}>
@@ -856,7 +784,6 @@ export default function AdminSchedulePage() {
                     </Select>
                   </div>
                 </div>
-
                 <div className="flex justify-end gap-2 mt-6">
                   <Button variant="outline" onClick={() => setEditingExam(null)}>
                     <X className="mr-2 h-4 w-4" />

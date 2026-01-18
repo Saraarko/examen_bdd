@@ -1,34 +1,27 @@
 'use client'
-
 import * as React from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
-
 import { cn } from '@/lib/utils'
-
 function Drawer({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
   return <DrawerPrimitive.Root data-slot="drawer" {...props} />
 }
-
 function DrawerTrigger({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
   return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
 }
-
 function DrawerPortal({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
   return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />
 }
-
 function DrawerClose({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
 }
-
 function DrawerOverlay({
   className,
   ...props
@@ -44,7 +37,6 @@ function DrawerOverlay({
     />
   )
 }
-
 function DrawerContent({
   className,
   children,
@@ -71,7 +63,6 @@ function DrawerContent({
     </DrawerPortal>
   )
 }
-
 function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -84,7 +75,6 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
     />
   )
 }
-
 function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -94,7 +84,6 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
     />
   )
 }
-
 function DrawerTitle({
   className,
   ...props
@@ -107,7 +96,6 @@ function DrawerTitle({
     />
   )
 }
-
 function DrawerDescription({
   className,
   ...props
@@ -120,7 +108,6 @@ function DrawerDescription({
     />
   )
 }
-
 export {
   Drawer,
   DrawerPortal,

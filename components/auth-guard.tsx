@@ -1,20 +1,16 @@
 "use client"
-
 import { useAuth } from "@/hooks/use-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { GraduationCap, Loader2 } from "lucide-react"
 import Link from "next/link"
-
 interface AuthGuardProps {
   children: React.ReactNode
   requiredRole?: "admin" | "dean" | "department" | "student" | "teacher"
   fallback?: React.ReactNode
 }
-
 export function AuthGuard({ children, requiredRole, fallback }: AuthGuardProps) {
   const { user, isLoading, requireAuth } = useAuth()
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -25,14 +21,11 @@ export function AuthGuard({ children, requiredRole, fallback }: AuthGuardProps) 
       </div>
     )
   }
-
   const authenticatedUser = requireAuth(requiredRole)
-
   if (!authenticatedUser) {
     if (fallback) {
       return <>{fallback}</>
     }
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -71,6 +64,5 @@ export function AuthGuard({ children, requiredRole, fallback }: AuthGuardProps) 
       </div>
     )
   }
-
   return <>{children}</>
 }

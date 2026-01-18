@@ -50,7 +50,7 @@ try {
 
     // Enrollments
     console.log('Generating enrollments...');
-    db.prepare(`INSERT INTO ModuleEnrollment (studentId, moduleId) SELECT s.id, m.id FROM Student s JOIN Module m ON s.formationId = m.formationId`).run();
+    db.prepare(`INSERT INTO ModuleEnrollment (studentId, moduleId) SELECT s.id, m.id FROM Student s JOIN Module m ON s.formationId = m.formationId WHERE m.semester = 1`).run();
     db.prepare(`INSERT INTO ExamEnrollment (studentId, examSessionId) SELECT me.studentId, es.id FROM ModuleEnrollment me JOIN ExamSession es ON me.moduleId = es.moduleId`).run();
 
     // Stats

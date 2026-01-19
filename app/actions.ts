@@ -200,10 +200,20 @@ export async function getAdminDashboard() {
         const amphisUtilises = usedRooms.filter((r: any) => r.name.toLowerCase().includes('amphi')).length;
         const sallesUtilisees = usedRooms.filter((r: any) => !r.name.toLowerCase().includes('amphi')).length;
 
+        // Calcul dynamique des statistiques
+        const totalExams = nbExams || 1; // Éviter division par zéro
+        const conflictCount = db.prepare('SELECT COUNT(*) as count FROM Conflict').get().count;
+        const tauxConflits = parseFloat(((conflictCount / totalExams) * 100).toFixed(1));
+
+        const totalHours = db.prepare('SELECT SUM(duration) as total FROM ExamSession').get().total || 0;
+        const heuresProfPlanifiees = Math.round(totalHours / 60);
+
         if (kpis) {
             kpis.nbExamensPlanifies = nbExams;
             kpis.amphisUtilises = amphisUtilises;
             kpis.sallesUtilisees = sallesUtilisees;
+            kpis.tauxConflits = tauxConflits;
+            kpis.heuresProfPlanifiees = heuresProfPlanifiees;
         }
 
         const conflits = db.prepare('SELECT * FROM Conflict').all();
@@ -248,7 +258,35 @@ export async function getAdminDashboard() {
 export async function getDeanDashboard() {
     if (!db) throw new Error("Database not connected");
 
-    const kpis = db.prepare('SELECT * FROM KPI').get() || { tempsGenerationEDT: 0, nbExamensPlanifies: 0, tauxConflits: 0, tauxValidation: 0, heuresProfPlanifiees: 0, amphisUtilises: 0, sallesUtilisees: 0 };
+    // Calcul dynamique des KPI pour le Doyen
+    const nbExams = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get().count;
+
+    // Calcul de l'utilisation des salles
+    const usedRooms = db.prepare(`
+        SELECT er.name
+        FROM ExamRoom er
+        WHERE er.id IN (SELECT DISTINCT examRoomId FROM ExamSession)
+    `).all();
+    const amphisUtilises = usedRooms.filter((r: any) => r.name.toLowerCase().includes('amphi')).length;
+    const sallesUtilisees = usedRooms.filter((r: any) => !r.name.toLowerCase().includes('amphi')).length;
+
+    // Calcul des conflits et heures
+    const conflictCount = db.prepare('SELECT COUNT(*) as count FROM Conflict').get().count;
+    const totalExams = nbExams || 1;
+    const tauxConflits = parseFloat(((conflictCount / totalExams) * 100).toFixed(1));
+
+    const totalHours = db.prepare('SELECT SUM(duration) as total FROM ExamSession').get().total || 0;
+    const heuresProfPlanifiees = Math.round(totalHours / 60);
+
+    const kpis = {
+        tempsGenerationEDT: 1.5, // Valeur simulée ou stockée
+        nbExamensPlanifies: nbExams,
+        tauxConflits: tauxConflits,
+        tauxValidation: nbExams > 0 ? Math.round((db.prepare("SELECT COUNT(*) as count FROM ExamSession WHERE status = 'PUBLISHED'").get().count / nbExams) * 100) : 0,
+        heuresProfPlanifiees: heuresProfPlanifiees,
+        amphisUtilises: amphisUtilises,
+        sallesUtilisees: sallesUtilisees
+    };
     const university = db.prepare('SELECT * FROM UniversityInfo').get() || { name: 'Université', totalStudents: 0, totalDepartments: 0, totalFormations: 0 };
     const departments = db.prepare('SELECT * FROM Department').all() || [];
 

@@ -638,9 +638,30 @@ export async function getExams() {
     `).all();
 }
 
+async function checkStudentConflict(moduleId: number, sessionDate: string, excludeExamId?: number) {
+    const module = db.prepare('SELECT formationId FROM Module WHERE id = ?').get(moduleId);
+    if (!module) return null;
+
+    const query = `
+        SELECT es.*, m.name as moduleName 
+        FROM ExamSession es
+        JOIN Module m ON es.moduleId = m.id
+        WHERE m.formationId = ? AND es.sessionDate = ? 
+        ${excludeExamId ? 'AND es.id != ' + excludeExamId : ''}
+    `;
+    const existingExam = db.prepare(query).get(module.formationId, sessionDate);
+    return existingExam;
+}
+
 export async function createExam(data: any) {
     if (!db) throw new Error("Database not connected");
     const { moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type } = data;
+
+    const conflict = await checkStudentConflict(moduleId, sessionDate);
+    if (conflict) {
+        throw new Error(`Conflit : La formation a déjà l'examen "${conflict.moduleName}" prévu le ${sessionDate}.`);
+    }
+
     db.prepare(`
         INSERT INTO ExamSession (moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')
@@ -651,6 +672,12 @@ export async function createExam(data: any) {
 export async function updateExamAction(id: number, data: any) {
     if (!db) throw new Error("Database not connected");
     const { moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status } = data;
+
+    const conflict = await checkStudentConflict(moduleId, sessionDate, id);
+    if (conflict) {
+        throw new Error(`Conflit : La formation a déjà l'examen "${conflict.moduleName}" prévu le ${sessionDate}.`);
+    }
+
     db.prepare(`
         UPDATE ExamSession 
         SET moduleId = ?, examRoomId = ?, professorId = ?, sessionDate = ?, startTime = ?, endTime = ?, duration = ?, type = ?, status = ?

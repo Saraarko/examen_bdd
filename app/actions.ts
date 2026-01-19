@@ -45,7 +45,7 @@ export async function getStudentPlanning(email: string) {
         JOIN Module m ON es.moduleId = m.id
         JOIN ExamRoom er ON es.examRoomId = er.id
         JOIN Professor p ON es.professorId = p.id
-        WHERE me.studentId = ? AND es.status IN ('PUBLISHED', 'PENDING_DEAN', 'PENDING_CHEF', 'DRAFT')
+        WHERE me.studentId = ? AND es.status = 'PUBLISHED'
         ORDER BY es.sessionDate ASC
     `).all(student.id);
 
@@ -99,7 +99,7 @@ export async function getTeacherPlanning(email: string) {
             FROM ModuleEnrollment 
             GROUP BY moduleId
         ) me_counts ON m.id = me_counts.moduleId
-        WHERE es.professorId = ?
+        WHERE es.professorId = ? AND es.status = 'PUBLISHED'
         ORDER BY es.sessionDate ASC
     `).all(prof.id);
 
@@ -243,9 +243,9 @@ export async function getAdminDashboard() {
 export async function getDeanDashboard() {
     if (!db) throw new Error("Database not connected");
 
-    const kpis = db.prepare('SELECT * FROM KPI').get();
-    const university = db.prepare('SELECT * FROM UniversityInfo').get();
-    const departments = db.prepare('SELECT * FROM Department').all();
+    const kpis = db.prepare('SELECT * FROM KPI').get() || { tempsGenerationEDT: 0, nbExamensPlanifies: 0, tauxConflits: 0, tauxValidation: 0, heuresProfPlanifiees: 0, amphisUtilises: 0, sallesUtilisees: 0 };
+    const university = db.prepare('SELECT * FROM UniversityInfo').get() || { name: 'Université', totalStudents: 0, totalDepartments: 0, totalFormations: 0 };
+    const departments = db.prepare('SELECT * FROM Department').all() || [];
 
     const departmentsWithStats = departments.map((dept: any) => {
         const profCount = db.prepare('SELECT COUNT(*) as count FROM Professor WHERE departmentId = ?').get(dept.id).count;

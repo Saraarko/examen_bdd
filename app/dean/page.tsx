@@ -1,3 +1,337 @@
-"use client"import { useState, useEffect } from "react"import { Button } from "@/components/ui/button"import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"import { TrendingUp, AlertTriangle, CheckCircle, Building2, Clock, Calendar, CheckCircle2, XCircle, Eye } from "lucide-react"import { Progress } from "@/components/ui/progress"import { AuthGuard } from "@/components/auth-guard"import { DashboardNav } from "@/components/dashboard-nav"import { useToast } from "@/hooks/use-toast"import { useSchedule } from "@/contexts/schedule-context"import { useAuth } from "@/hooks/use-auth"import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"import { Textarea } from "@/components/ui/textarea"import { Label } from "@/components/ui/label"import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"import { Badge } from "@/components/ui/badge"import { approveFacultySchedule, rejectFacultySchedule } from "@/app/actions"export default function DeanPage() {  const { toast } = useToast()  const { user } = useAuth()  const { scheduleMetadata, exams, approveByDoyen, rejectByDoyen, publishSchedule } = useSchedule()  const [isValidating, setIsValidating] = useState(false)  const [isValidated, setIsValidated] = useState(false)  const [isApproving, setIsApproving] = useState(false)  const [isRejecting, setIsRejecting] = useState(false)  const [rejectionReason, setRejectionReason] = useState("")  const [showRejectDialog, setShowRejectDialog] = useState(false)  const [showScheduleDialog, setShowScheduleDialog] = useState(false)  const [dashboardData, setDashboardData] = useState<any>(null)  const fetchDashboard = () => {    fetch("/api/dean/dashboard")      .then(res => res.json())      .then(data => setDashboardData(data))      .catch(err => console.error("Error loading dean dashboard:", err))  }  useEffect(() => {    fetchDashboard()  }, [])  if (!dashboardData) {    return (      <AuthGuard requiredRole="dean">        <div className="min-h-screen bg-background flex items-center justify-center">          <p>Chargement du tableau de bord...</p>        </div>      </AuthGuard>    )  }  const { kpis, university, departments } = dashboardData  const globalStats = [    {      label: "Occupation Amphis",      value: `${Math.round((kpis.amphisUtilises / 10) * 100)}%`,
-      trend: "+5%",      color: "text-chart-1",      icon: Building2,    },    {      label: "Occupation Salles",      value: `${Math.round((kpis.sallesUtilisees / 30) * 100)}%`,      trend: "+3%",      color: "text-chart-2",      icon: Building2,    },    {      label: "Taux Conflits Global",      value: `${kpis.tauxConflits}%`,      trend: "-1.2%",      color: "text-chart-3",      icon: AlertTriangle,    },    {      label: "Heures Prof Planifiées",      value: `${kpis.heuresProfPlanifiees}h`,      trend: "+12h",      color: "text-chart-4",      icon: Clock,    },  ]  const departmentData = departments.map((dept: any) => ({    name: dept.name,    conflicts: Math.floor(Math.random() * 3),
-    occupancy: Math.floor(70 + Math.random() * 20),    status: dept.status,    students: dept.totalStudents,    formations: dept.formations,  }))  const pendingDeanDepts = departmentData.filter((d: any) => d.status === "pending_dean").length  const allDeptsReady = departmentData.every((d: any) => d.status === "pending_dean" || d.status === "published")  const handleValidateGlobalSchedule = async () => {    setIsValidating(true)    toast({      title: "Validation en cours...",      description: "Validation globale de l'emploi du temps en cours.",    })    await new Promise(resolve => setTimeout(resolve, 4000))    setIsValidating(false)    setIsValidated(true)    toast({      title: "Emploi du temps validé !",      description: "L'emploi du temps global a été validé avec succès et publié aux étudiants.",      variant: "default",    })  }  const handleApprove = async () => {    setIsApproving(true)    toast({      title: "Approbation en cours...",      description: "Validation finale de l'emploi du temps en cours.",    })    try {      await approveFacultySchedule();      toast({        title: "Emploi du temps approuvé et publié !",        description: "L'emploi du temps a été approuvé et est maintenant visible par les étudiants et les professeurs.",        variant: "default",      })      setIsValidated(true);      fetchDashboard();    } catch (e: any) {      toast({ title: "Erreur", description: e.message, variant: "destructive" });    } finally {      setIsApproving(false)    }  }  const handleReject = async () => {    setIsRejecting(true)    toast({      title: "Rejet en cours...",      description: "Rejet de l'emploi du temps en cours.",    })    try {      await rejectFacultySchedule(rejectionReason);      toast({        title: "Emploi du temps rejeté",        description: "L'emploi du temps a été rejeté. Les Chefs de Département seront notifiés.",        variant: "destructive",      })      setShowRejectDialog(false)      setRejectionReason("")      fetchDashboard();    } catch (e: any) {      toast({ title: "Erreur", description: e.message, variant: "destructive" });    } finally {      setIsRejecting(false)    }  }  return (    <AuthGuard requiredRole="dean">      <div className="min-h-screen bg-background">        <DashboardNav          title="Tableau de Bord Vice-Doyen / Doyen"          subtitle={`${university.name} - Vue stratégique globale et KPIs académiques`}        />        <div className="container mx-auto px-4 py-8">          <div className="grid gap-6 md:grid-cols-4 mb-8">            {globalStats.map((stat, index) => {              const Icon = stat.icon              return (                <Card key={index}>                  <CardHeader className="pb-2">                    <CardDescription className="text-xs flex items-center gap-2">                      <Icon className="h-3 w-3" />                      {stat.label}                    </CardDescription>                  </CardHeader>                  <CardContent>                    <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">                      <TrendingUp className="h-3 w-3" />                      {stat.trend} vs période précédente                    </div>                  </CardContent>                </Card>              )            })}          </div>          <div className="grid gap-6 md:grid-cols-3 mb-8">            <Card className="border-2">              <CardHeader className="pb-2">                <CardDescription className="text-xs">Vue d'ensemble</CardDescription>              </CardHeader>              <CardContent className="space-y-2">                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Total Étudiants</span>                  <span className="text-lg font-bold">{university.totalStudents.toLocaleString()}</span>                </div>                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Départements</span>                  <span className="text-lg font-bold">{university.totalDepartments}</span>                </div>                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Formations</span>                  <span className="text-lg font-bold">{university.totalFormations}</span>                </div>              </CardContent>            </Card>            <Card className="border-2">              <CardHeader className="pb-2">                <CardDescription className="text-xs">Performance Système</CardDescription>              </CardHeader>              <CardContent className="space-y-2">                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Examens Planifiés</span>                  <span className="text-lg font-bold">{kpis.nbExamensPlanifies}</span>                </div>                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Temps Génération</span>                  <span className="text-lg font-bold text-green-500">{kpis.tempsGenerationEDT}s</span>                </div>                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Taux Validation</span>                  <span className="text-lg font-bold">{kpis.tauxValidation}%</span>                </div>              </CardContent>            </Card>            <Card className="border-2">              <CardHeader className="pb-2">                <CardDescription className="text-xs">Charges Enseignants</CardDescription>              </CardHeader>              <CardContent className="space-y-2">                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Total Professeurs</span>                  <span className="text-lg font-bold">                    {departments.reduce((sum: number, d: any) => sum + d.totalProfessors, 0)}                  </span>                </div>                <div className="flex items-center justify-between">                  <span className="text-sm text-muted-foreground">Heures Planifiées</span>                  <span className="text-lg font-bold">{kpis.heuresProfPlanifiees}h</span>                </div>              </CardContent>            </Card>          </div>          <div className="grid gap-6 lg:grid-cols-2 mb-8">            <Card>              <CardHeader>                <CardTitle>Vue par Département</CardTitle>                <CardDescription>                  État des validations et conflits ({university.totalDepartments} départements)                </CardDescription>              </CardHeader>              <CardContent>                <div className="space-y-4">                  {departmentData.map((dept: any) => (                    <div key={dept.name} className="space-y-2">                      <div className="flex items-center justify-between">                        <div className="flex-1">                          <span className="font-medium">{dept.name}</span>                          <span className="text-xs text-muted-foreground ml-2">                            ({(dept.students || 0).toLocaleString()} étudiants • {dept.formations} formations)                          </span>                        </div>                        <div className="flex items-center gap-2">                          {dept.status === 'published' ? (                            <CheckCircle className="h-4 w-4 text-green-500" />                          ) : dept.status === 'pending_dean' ? (                            <Clock className="h-4 w-4 text-blue-500" />                          ) : (                            <AlertTriangle className="h-4 w-4 text-yellow-500" />                          )}                        </div>                      </div>                      <Progress value={dept.occupancy} className="h-2" />                      <span className="text-xs text-muted-foreground">Occupation salles: {dept.occupancy}%</span>                    </div>                  ))}                </div>              </CardContent>            </Card>            <Card>              <CardHeader>                <CardTitle>Actions Requises</CardTitle>                <CardDescription>Validation et décisions stratégiques</CardDescription>              </CardHeader>              <CardContent>                <div className="space-y-3">                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">                    <div className="flex items-start gap-3">                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />                      <div>                        <p className="font-medium text-sm">{pendingDeanDepts} départements en attente de votre validation</p>                        <p className="text-xs text-muted-foreground">Vérifiez les conflits avant d'approuver globalement</p>                      </div>                    </div>                  </div>                  <div className="flex gap-3">                    <Button                      className="flex-1 bg-green-600 hover:bg-green-700"                      onClick={handleApprove}                      disabled={isApproving || pendingDeanDepts === 0}                    >                      <CheckCircle2 className="mr-2 h-4 w-4" />                      {isApproving ? "Approbation..." : "Approuver Tout"}                    </Button>                    <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>                      <DialogTrigger asChild>                        <Button variant="destructive" className="flex-1" disabled={isRejecting || pendingDeanDepts === 0}>                          <XCircle className="mr-2 h-4 w-4" /> Rejeter Tout                        </Button>                      </DialogTrigger>                      <DialogContent>                        <DialogHeader>                          <DialogTitle>Rejeter l'emploi du temps global</DialogTitle>                          <DialogDescription>Indiquez la raison du rejet global. Les chefs de département seront notifiés.</DialogDescription>                        </DialogHeader>                        <div className="space-y-4 py-4">                          <div>                            <Label htmlFor="dean-rejection-reason">Raison du rejet</Label>                            <Textarea id="dean-rejection-reason" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="mt-2" />                          </div>                        </div>                        <DialogFooter>                          <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Annuler</Button>                          <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectionReason.trim()}>                            {isRejecting ? "Rejet en cours..." : "Confirmer le rejet"}                          </Button>                        </DialogFooter>                      </DialogContent>                    </Dialog>                  </div>                </div>              </CardContent>            </Card>          </div>        </div>      </div>    </AuthGuard>  )}
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { TrendingUp, AlertTriangle, CheckCircle, Building2, Clock, Calendar, CheckCircle2, XCircle, Eye } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { AuthGuard } from "@/components/auth-guard"
+import { DashboardNav } from "@/components/dashboard-nav"
+import { useToast } from "@/hooks/use-toast"
+import { useSchedule } from "@/contexts/schedule-context"
+import { useAuth } from "@/hooks/use-auth"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { approveFacultySchedule, rejectFacultySchedule } from "@/app/actions"
+
+export default function DeanPage() {
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const { scheduleMetadata, exams, approveByDoyen, rejectByDoyen, publishSchedule } = useSchedule()
+  const [isValidating, setIsValidating] = useState(false)
+  const [isValidated, setIsValidated] = useState(false)
+  const [isApproving, setIsApproving] = useState(false)
+  const [isRejecting, setIsRejecting] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false)
+  const [dashboardData, setDashboardData] = useState<any>(null)
+
+  const fetchDashboard = () => {
+    fetch("/api/dean/dashboard")
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          console.error("API error:", data.error)
+          return
+        }
+        setDashboardData(data)
+      })
+      .catch(err => console.error("Error loading dean dashboard:", err))
+  }
+
+  useEffect(() => {
+    fetchDashboard()
+  }, [])
+
+  if (!dashboardData) {
+    return (
+      <AuthGuard requiredRole="dean">
+        <div className="min-h-screen bg-background flex items-center justify-center text-white">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            <p>Chargement du tableau de bord Vice-Doyen...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
+  const { kpis, university, departments } = dashboardData
+
+  const globalStats = [
+    {
+      label: "Occupation Amphis",
+      value: `${Math.round(((kpis?.amphisUtilises || 0) / 10) * 100)}%`,
+      trend: "+5%",
+      color: "text-chart-1",
+      icon: Building2,
+    },
+    {
+      label: "Occupation Salles",
+      value: `${Math.round(((kpis?.sallesUtilisees || 0) / 30) * 100)}%`,
+      trend: "+3%",
+      color: "text-chart-2",
+      icon: Building2,
+    },
+    {
+      label: "Taux Conflits Global",
+      value: `${kpis?.tauxConflits || 0}%`,
+      trend: "-1.2%",
+      color: "text-chart-3",
+      icon: AlertTriangle,
+    },
+    {
+      label: "Heures Prof Planifiées",
+      value: `${kpis?.heuresProfPlanifiees || 0}h`,
+      trend: "+12h",
+      color: "text-chart-4",
+      icon: Clock,
+    },
+  ]
+
+  const departmentData = (departments || []).map((dept: any) => ({
+    name: dept.name,
+    conflicts: Math.floor(Math.random() * 3),
+    occupancy: Math.floor(70 + Math.random() * 20),
+    status: dept.status,
+    students: dept.totalStudents,
+    formations: dept.formations,
+  }))
+
+  const pendingDeanDepts = departmentData.filter((d: any) => d.status === "pending_dean").length
+  const allDeptsReady = departmentData.every((d: any) => d.status === "pending_dean" || d.status === "published")
+
+  const handleApprove = async () => {
+    setIsApproving(true)
+    toast({
+      title: "Approbation en cours...",
+      description: "Validation finale de l'emploi du temps en cours.",
+    })
+    try {
+      await approveFacultySchedule();
+      toast({
+        title: "Emploi du temps approuvé et publié !",
+        description: "L'emploi du temps a été approuvé et est maintenant visible par les étudiants et les professeurs.",
+        variant: "default",
+      })
+      setIsValidated(true);
+      fetchDashboard();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setIsApproving(false)
+    }
+  }
+
+  const handleReject = async () => {
+    setIsRejecting(true)
+    toast({
+      title: "Rejet en cours...",
+      description: "Rejet de l'emploi du temps en cours.",
+    })
+    try {
+      await rejectFacultySchedule(rejectionReason);
+      toast({
+        title: "Emploi du temps rejeté",
+        description: "L'emploi du temps a été rejeté. Les Chefs de Département seront notifiés.",
+        variant: "destructive",
+      })
+      setShowRejectDialog(false)
+      setRejectionReason("")
+      fetchDashboard();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setIsRejecting(false)
+    }
+  }
+
+  return (
+    <AuthGuard requiredRole="dean">
+      <div className="min-h-screen bg-background">
+        <DashboardNav
+          title="Tableau de Bord Vice-Doyen / Doyen"
+          subtitle={`${university?.name || 'Université'} - Vue stratégique globale et KPIs académiques`}
+        />
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid gap-6 md:grid-cols-4 mb-8">
+            {globalStats.map((stat, index) => {
+              const Icon = stat.icon
+              return (
+                <Card key={index}>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs flex items-center gap-2">
+                      <Icon className="h-3 w-3" />
+                      {stat.label}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {stat.trend} vs période précédente
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3 mb-8">
+            <Card className="border-2">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-xs">Vue d'ensemble</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total Étudiants</span>
+                  <span className="text-lg font-bold">{(university?.totalStudents || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Départements</span>
+                  <span className="text-lg font-bold">{university?.totalDepartments || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Formations</span>
+                  <span className="text-lg font-bold">{university?.totalFormations || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-xs">Performance Système</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Examens Planifiés</span>
+                  <span className="text-lg font-bold">{kpis?.nbExamensPlanifies || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Temps Génération</span>
+                  <span className="text-lg font-bold text-green-500">{kpis?.tempsGenerationEDT || 0}s</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Taux Validation</span>
+                  <span className="text-lg font-bold">{kpis?.tauxValidation || 0}%</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-xs">Charges Enseignants</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total Professeurs</span>
+                  <span className="text-lg font-bold">
+                    {(departments || []).reduce((sum: number, d: any) => sum + (d.totalProfessors || 0), 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Heures Planifiées</span>
+                  <span className="text-lg font-bold">{kpis?.heuresProfPlanifiees || 0}h</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Vue par Département</CardTitle>
+                <CardDescription>
+                  État des validations et conflits ({(university?.totalDepartments || 0)} départements)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {departmentData.map((dept: any) => (
+                    <div key={dept.name} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <span className="font-medium">{dept.name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({(dept.students || 0).toLocaleString()} étudiants • {dept.formations || 0} formations)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dept.status === 'published' ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : dept.status === 'pending_dean' ? (
+                            <Clock className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                          )}
+                        </div>
+                      </div>
+                      <Progress value={dept.occupancy} className="h-2" />
+                      <span className="text-xs text-muted-foreground">Occupation salles: {dept.occupancy}%</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions Requises</CardTitle>
+                <CardDescription>Validation et décisions stratégiques</CardDescription>              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">{pendingDeanDepts} départements en attente de votre validation</p>
+                        <p className="text-xs text-muted-foreground">Vérifiez les conflits avant d'approuver globalement</p>                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={handleApprove}
+                      disabled={isApproving || pendingDeanDepts === 0}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {isApproving ? "Approbation..." : "Approuver Tout"}
+                    </Button>
+                    <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive" className="flex-1" disabled={isRejecting || pendingDeanDepts === 0}>
+                          <XCircle className="mr-2 h-4 w-4" /> Rejeter Tout
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Rejeter l'emploi du temps global</DialogTitle>
+                          <DialogDescription>Indiquez la raison du rejet global. Les chefs de département seront notifiés.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <Label htmlFor="dean-rejection-reason">Raison du rejet</Label>
+                            <Textarea id="dean-rejection-reason" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="mt-2" />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Annuler</Button>
+                          <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectionReason.trim()}>
+                            {isRejecting ? "Rejet en cours..." : "Confirmer le rejet"}                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </AuthGuard>
+  )
+}

@@ -1,4 +1,5 @@
-id,studentNumber,firstName,lastName,email,password,formationId
+id,studentNumber,firstName,lastName,email,password,formationId
+
 1,STU00001,Nassim,Belkadi,nassim.belkadi1@univ.dz,password123,2
 2,STU00002,Hachem,Tadlaoui,hachem.tadlaoui2@univ.dz,password123,3
 3,STU00003,Nadia,Chraibi,nadia.chraibi3@univ.dz,password123,4

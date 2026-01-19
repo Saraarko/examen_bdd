@@ -9,7 +9,7 @@ function readCsv(filename) {
     const filePath = path.join(dataDir, filename);
     if (!fs.existsSync(filePath)) return [];
     const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.replace(/\r\n/g, '\n').trim().split('\n');
+    const lines = content.replace(/\r\n/g, '\n').trim().split('\n').filter(line => line.trim() !== '');
     const headers = lines[0].split(',').map(h => h.trim());
     return lines.slice(1).map(line => {
         const values = line.split(',');

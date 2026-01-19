@@ -136,6 +136,18 @@ export default function StudentPage() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const { publishAllExams } = await import("@/app/actions")
+                    await publishAllExams()
+                    window.location.reload()
+                  }}
+                  className="rounded-lg text-xs"
+                >
+                  Publier Tout (Debug)
+                </Button>
+                <Button
                   variant={viewMode === "calendar" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("calendar")}

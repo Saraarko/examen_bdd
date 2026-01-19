@@ -180,7 +180,6 @@ export async function authenticateUser(email: string, password: string, role: st
 export async function getAdminDashboard() {
     if (!db) throw new Error("Database not connected");
     try {
-        await updateConflicts();
         const kpis = db.prepare('SELECT * FROM KPI').get();
         const nbExams = db.prepare('SELECT COUNT(*) as count FROM ExamSession').get().count;
 
@@ -669,5 +668,11 @@ export async function deleteExamAction(id: number) {
 export async function submitAllDraftExams() {
     if (!db) throw new Error("Database not connected");
     db.prepare("UPDATE ExamSession SET status = 'PENDING_CHEF' WHERE status = 'DRAFT'").run();
+    return { success: true };
+}
+
+export async function publishAllExams() {
+    if (!db) throw new Error("Database not connected");
+    db.prepare("UPDATE ExamSession SET status = 'PUBLISHED'").run();
     return { success: true };
 }

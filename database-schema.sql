@@ -1,12 +1,3 @@
--- =================================================
--- SCHÉMA DE BASE DE DONNÉES - SYSTÈME DE PLANIFICATION D'EXAMENS
--- Structure adaptée à l'échelle réelle avec séparation par dashboard
--- =================================================
-
--- =================================================
--- TABLES GLOBALES (partagées par tous les dashboards)
--- =================================================
-
 -- Départements universitaires
 CREATE TABLE departments (
     id SERIAL PRIMARY KEY,
@@ -214,9 +205,9 @@ CREATE TABLE dean_strategic_kpis (
     UNIQUE(kpi_date, kpi_name, department_id, formation_id)
 );
 
--- =================================================
+
 -- TABLES SPÉCIFIQUES AU DASHBOARD DÉPARTEMENT
--- =================================================
+
 
 -- Chefs de département
 CREATE TABLE department_heads (
@@ -495,9 +486,7 @@ CREATE TRIGGER trg_check_room_capacity
     AFTER INSERT OR UPDATE ON exam_enrollments
     FOR EACH ROW EXECUTE FUNCTION check_room_capacity();
 
--- =================================================
--- DONNÉES D'INITIALISATION
--- =================================================
+
 
 -- Insertion des configurations système par défaut
 INSERT INTO admin_system_configs (config_key, config_value, description) VALUES

@@ -36,27 +36,30 @@ export async function getStudentPlanning(email: string) {
 
     const rows = db.prepare(`
         SELECT 
-            es.id as examId, es.sessionDate, es.startTime, es.endTime, es.duration, es.type,
+            es.id as examId, es.sessionDate, es.startTime, es.endTime, es.duration, es.type, es.status,
             m.name as moduleName, m.code as moduleCode,
             er.name as roomName, er.building as roomBuilding,
             p.firstName as profFirstName, p.lastName as profLastName
-        FROM ModuleEnrollment me
-        JOIN ExamSession es ON me.moduleId = es.moduleId
+        FROM ExamEnrollment ee
+        JOIN ExamSession es ON ee.examSessionId = es.id
         JOIN Module m ON es.moduleId = m.id
         JOIN ExamRoom er ON es.examRoomId = er.id
         JOIN Professor p ON es.professorId = p.id
-        WHERE me.studentId = ? AND es.status = 'PUBLISHED'
+        WHERE ee.studentId = ?
         ORDER BY es.sessionDate ASC
     `).all(student.id);
 
+    console.log(`[getStudentPlanning] Found ${rows.length} published exams for student ${email}`);
+
     const exams = rows.map((row: any) => ({
         id: row.examId,
-        sessionDate: new Date(row.sessionDate),
-        isoDate: row.sessionDate, // Assuming SQLite stores YYYY-MM-DD
+        sessionDate: row.sessionDate,
+        isoDate: row.sessionDate,
         startTime: row.startTime,
         endTime: row.endTime,
         duration: row.duration,
         type: row.type,
+        status: row.status,
         module: {
             name: row.moduleName,
             code: row.moduleCode
@@ -85,7 +88,7 @@ export async function getTeacherPlanning(email: string) {
 
     const rows = db.prepare(`
         SELECT 
-            es.id as examId, es.sessionDate, es.startTime, es.endTime, es.duration, es.type,
+            es.id as examId, es.sessionDate, es.startTime, es.endTime, es.duration, es.type, es.status,
             m.id as moduleId, m.name as moduleName, m.code as moduleCode, m.credits, m.semester,
             COALESCE(me_counts.studentCount, 0) as studentCount,
             f.name as formationName,
@@ -99,17 +102,20 @@ export async function getTeacherPlanning(email: string) {
             FROM ModuleEnrollment 
             GROUP BY moduleId
         ) me_counts ON m.id = me_counts.moduleId
-        WHERE es.professorId = ? AND es.status = 'PUBLISHED'
+        WHERE es.professorId = ?
         ORDER BY es.sessionDate ASC
     `).all(prof.id);
 
+    console.log(`[getTeacherPlanning] Found ${rows.length} published exams for professor ${email}`);
+
     const exams = rows.map((row: any) => ({
         id: row.examId,
-        sessionDate: new Date(row.sessionDate),
+        sessionDate: row.sessionDate,
         startTime: row.startTime,
         endTime: row.endTime,
         duration: row.duration,
         type: row.type,
+        status: row.status,
         module: {
             id: row.moduleId,
             name: row.moduleName,
@@ -369,73 +375,97 @@ export async function generateAutoSchedule() {
         db.prepare("DELETE FROM ExamSession WHERE status IN ('DRAFT', 'PENDING_CHEF', 'PENDING_DEAN')").run();
         db.prepare('DELETE FROM Conflict').run();
 
-        const modules = db.prepare('SELECT * FROM Module WHERE semester = 1').all();
+        // Fetch formations and their modules
+        const formations = db.prepare('SELECT id, name FROM Formation').all();
         const rooms = db.prepare('SELECT * FROM ExamRoom').all();
         const professors = db.prepare('SELECT * FROM Professor').all();
 
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() + 7);
+        startDate.setDate(startDate.getDate() + 7); // Start in 1 week
 
         const timeSlots = ["08:30", "11:00", "14:00"];
         let examsCreated = 0;
 
-        // Tracking maps to ensure no overlaps
-        const formationSlots = new Map<number, Set<string>>(); // formationId -> Set("YYYY-MM-DD|HH:MM")
+        // Tracking maps
+        const formationLastExamDate = new Map<number, Date>(); // formationId -> Date of last scheduled exam
         const roomSlots = new Map<string, Set<number>>();      // "YYYY-MM-DD|HH:MM" -> Set(roomId)
         const profSlots = new Map<string, Set<number>>();      // "YYYY-MM-DD|HH:MM" -> Set(profId)
 
-        for (const module of (modules as any[])) {
-            let assigned = false;
-            let dayOffset = 0;
+        for (const formation of (formations as any[])) {
+            // Select exactly 6 modules for this formation (Semester 1 priority)
+            const modules = db.prepare(`
+                SELECT * FROM Module 
+                WHERE formationId = ? AND semester = 1 
+                LIMIT 6
+            `).all(formation.id);
 
-            while (!assigned && dayOffset < 30) { // Safety break at 30 days
-                let sessionDate = new Date(startDate);
-                sessionDate.setDate(sessionDate.getDate() + dayOffset);
+            // Initialize scheduling pointer for this formation
+            let currentScheduleDate = new Date(startDate);
 
-                // Skip Saturday (6) and Sunday (0)
-                if (sessionDate.getDay() === 6 || sessionDate.getDay() === 0) {
-                    dayOffset++;
-                    continue;
+            for (const module of (modules as any[])) {
+                let assigned = false;
+                let dayOffset = 0;
+
+                while (!assigned && dayOffset < 60) { // Safety break
+                    let sessionDate = new Date(currentScheduleDate);
+                    sessionDate.setDate(sessionDate.getDate() + dayOffset);
+
+                    // Skip Saturday (6) and Sunday (0)
+                    if (sessionDate.getDay() === 6 || sessionDate.getDay() === 0) {
+                        dayOffset++;
+                        continue;
+                    }
+
+                    // Enforce gap: Check if we are at least 2 days after the last exam
+                    const lastExamDate = formationLastExamDate.get(formation.id);
+                    if (lastExamDate) {
+                        const diffTime = Math.abs(sessionDate.getTime() - lastExamDate.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if (diffDays < 2) { // Less than 2 days gap means consecutive days or same day
+                            dayOffset++;
+                            continue;
+                        }
+                    }
+
+                    const dateStr = sessionDate.toISOString().split('T')[0];
+
+                    // Try to find a slot on this day
+                    for (const startTime of timeSlots) {
+                        const slotKey = `${dateStr}|${startTime}`;
+
+                        // Check room availability
+                        if (!roomSlots.has(slotKey)) roomSlots.set(slotKey, new Set());
+                        const room = (rooms as any[]).find((r: any) => !roomSlots.get(slotKey)!.has(r.id));
+                        if (!room) continue;
+
+                        // Check professor availability
+                        if (!profSlots.has(slotKey)) profSlots.set(slotKey, new Set());
+                        const prof = (professors as any[]).find((p: any) => !profSlots.get(slotKey)!.has(p.id));
+                        if (!prof) continue;
+
+                        // All checks passed!
+                        formationLastExamDate.set(formation.id, sessionDate); // Update last exam date
+                        roomSlots.get(slotKey)!.add(room.id);
+                        profSlots.get(slotKey)!.add(prof.id);
+
+                        const endH = parseInt(startTime.split(':')[0]) + 2;
+                        const endTime = `${endH.toString().padStart(2, '0')}:${startTime.split(':')[1]}`;
+
+                        db.prepare(`
+                            INSERT INTO ExamSession (moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status)
+                            VALUES (?, ?, ?, ?, ?, ?, 120, 'Session Normale', 'DRAFT')
+                        `).run(module.id, room.id, prof.id, dateStr, startTime, endTime);
+
+                        examsCreated++;
+                        assigned = true;
+
+                        // Advance the base schedule date for this formation to ensure we move forward
+                        currentScheduleDate = new Date(sessionDate);
+                        break;
+                    }
+
+                    if (!assigned) dayOffset++;
                 }
-
-                const dateStr = sessionDate.toISOString().split('T')[0];
-
-                for (const startTime of timeSlots) {
-                    const slotKey = `${dateStr}|${startTime}`;
-
-                    // 1. Check student conflict (formation already has an exam on this day?)
-                    if (!formationSlots.has(module.formationId)) formationSlots.set(module.formationId, new Set());
-                    if (formationSlots.get(module.formationId)!.has(dateStr)) continue;
-
-                    // 2. Check room availability
-                    if (!roomSlots.has(slotKey)) roomSlots.set(slotKey, new Set());
-                    const room = (rooms as any[]).find((r: any) => !roomSlots.get(slotKey)!.has(r.id));
-                    if (!room) continue;
-
-                    // 3. Check professor availability
-                    if (!profSlots.has(slotKey)) profSlots.set(slotKey, new Set());
-                    const prof = (professors as any[]).find((p: any) => !profSlots.get(slotKey)!.has(p.id));
-                    if (!prof) continue;
-
-                    // All checks passed!
-                    formationSlots.get(module.formationId)!.add(dateStr);
-                    roomSlots.get(slotKey)!.add(room.id);
-                    profSlots.get(slotKey)!.add(prof.id);
-
-                    const endH = parseInt(startTime.split(':')[0]) + 2;
-                    const endTime = `${endH.toString().padStart(2, '0')}:${startTime.split(':')[1]}`;
-
-                    db.prepare(`
-                        INSERT INTO ExamSession (moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status)
-                        VALUES (?, ?, ?, ?, ?, ?, 120, 'Session Normale', 'DRAFT')
-                    `).run(module.id, room.id, prof.id, dateStr, startTime, endTime);
-
-                    examsCreated++;
-                    assigned = true;
-                    break;
-                }
-
-                if (!assigned) dayOffset++;
             }
         }
 
@@ -638,29 +668,55 @@ export async function getExams() {
     `).all();
 }
 
-async function checkStudentConflict(moduleId: number, sessionDate: string, excludeExamId?: number) {
+async function checkAllConflicts(moduleId: number, date: string, startTime: string, roomId: number, profId: number, excludeExamId?: number) {
     const module = db.prepare('SELECT formationId FROM Module WHERE id = ?').get(moduleId);
-    if (!module) return null;
+    if (!module) throw new Error("Module introuvable");
 
-    const query = `
-        SELECT es.*, m.name as moduleName 
+    // 1. Un seul examen par jour pour la formation (étudiants)
+    const studentConflict = db.prepare(`
+        SELECT m.name 
         FROM ExamSession es
         JOIN Module m ON es.moduleId = m.id
-        WHERE m.formationId = ? AND es.sessionDate = ? 
+        WHERE m.formationId = ? AND date(es.sessionDate) = date(?)
         ${excludeExamId ? 'AND es.id != ' + excludeExamId : ''}
-    `;
-    const existingExam = db.prepare(query).get(module.formationId, sessionDate);
-    return existingExam;
+    `).get(module.formationId, date);
+
+    if (studentConflict) {
+        throw new Error(`Conflit Étudiant : Cette formation a déjà l'examen "${studentConflict.name}" prévu ce jour-là.`);
+    }
+
+    // 2. Pas deux examens dans la même salle à la même heure
+    const roomConflict = db.prepare(`
+        SELECT m.name 
+        FROM ExamSession es
+        JOIN Module m ON es.moduleId = m.id
+        WHERE es.examRoomId = ? AND date(es.sessionDate) = date(?) AND es.startTime = ?
+        ${excludeExamId ? 'AND es.id != ' + excludeExamId : ''}
+    `).get(roomId, date, startTime);
+
+    if (roomConflict) {
+        throw new Error(`Conflit Salle : La salle est déjà occupée par l'examen "${roomConflict.name}" à cette heure.`);
+    }
+
+    // 3. Pas deux surveillances pour le même professeur à la même heure
+    const profConflict = db.prepare(`
+        SELECT m.name 
+        FROM ExamSession es
+        JOIN Module m ON es.moduleId = m.id
+        WHERE es.professorId = ? AND date(es.sessionDate) = date(?) AND es.startTime = ?
+        ${excludeExamId ? 'AND es.id != ' + excludeExamId : ''}
+    `).get(profId, date, startTime);
+
+    if (profConflict) {
+        throw new Error(`Conflit Professeur : Ce professeur surveille déjà l'examen "${profConflict.name}" à cette heure.`);
+    }
 }
 
 export async function createExam(data: any) {
     if (!db) throw new Error("Database not connected");
     const { moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type } = data;
 
-    const conflict = await checkStudentConflict(moduleId, sessionDate);
-    if (conflict) {
-        throw new Error(`Conflit : La formation a déjà l'examen "${conflict.moduleName}" prévu le ${sessionDate}.`);
-    }
+    await checkAllConflicts(moduleId, sessionDate, startTime, examRoomId, professorId);
 
     db.prepare(`
         INSERT INTO ExamSession (moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status)
@@ -673,10 +729,7 @@ export async function updateExamAction(id: number, data: any) {
     if (!db) throw new Error("Database not connected");
     const { moduleId, examRoomId, professorId, sessionDate, startTime, endTime, duration, type, status } = data;
 
-    const conflict = await checkStudentConflict(moduleId, sessionDate, id);
-    if (conflict) {
-        throw new Error(`Conflit : La formation a déjà l'examen "${conflict.moduleName}" prévu le ${sessionDate}.`);
-    }
+    await checkAllConflicts(moduleId, sessionDate, startTime, examRoomId, professorId, id);
 
     db.prepare(`
         UPDATE ExamSession 
@@ -701,5 +754,13 @@ export async function submitAllDraftExams() {
 export async function publishAllExams() {
     if (!db) throw new Error("Database not connected");
     db.prepare("UPDATE ExamSession SET status = 'PUBLISHED'").run();
+    return { success: true };
+}
+
+export async function deleteAllExams() {
+    if (!db) throw new Error("Database not connected");
+    db.prepare('DELETE FROM ExamEnrollment').run();
+    db.prepare('DELETE FROM Conflict').run();
+    db.prepare('DELETE FROM ExamSession').run();
     return { success: true };
 }

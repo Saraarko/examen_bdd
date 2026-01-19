@@ -24,7 +24,8 @@ import {
   deleteExamAction,
   submitAllDraftExams,
   generateAutoSchedule,
-  optimizeConflictsAction
+  optimizeConflictsAction,
+  deleteAllExams
 } from "@/app/actions"
 import {
   ArrowLeft,
@@ -306,6 +307,28 @@ export default function AdminSchedulePage() {
       setLoading(false)
     }
   }
+  const handleDeleteAll = async () => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer TOUS les examens ? Cette action est irréversible.")) {
+      return
+    }
+    setLoading(true)
+    try {
+      await deleteAllExams()
+      toast({
+        title: "Succès",
+        description: "Tous les examens ont été supprimés.",
+      })
+      refreshData()
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Échec de la suppression.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
   const checkForConflicts = (newExamData: NewExamForm, existingExams = exams): string | null => {
     const examDate = newExamData.date ? format(newExamData.date, 'yyyy-MM-dd') : ''
     const roomConflict = existingExams.find(exam =>
@@ -384,7 +407,7 @@ export default function AdminSchedulePage() {
               </div>
             </div>
           )}
-          {}
+          { }
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="p-4">
@@ -431,7 +454,7 @@ export default function AdminSchedulePage() {
               </CardContent>
             </Card>
           </div>
-          {}
+          { }
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Gestion des Examens</h2>
@@ -447,6 +470,14 @@ export default function AdminSchedulePage() {
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 Générer automatiquement
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDeleteAll}
+                className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Tout supprimer
               </Button>
               <Button
                 variant="outline"
@@ -607,7 +638,7 @@ export default function AdminSchedulePage() {
               </Link>
             </div>
           </div>
-          {}
+          { }
           <Card>
             <CardHeader>
               <CardTitle>Examens Planifiés</CardTitle>
@@ -705,7 +736,7 @@ export default function AdminSchedulePage() {
               </ScrollArea>
             </CardContent>
           </Card>
-          {}
+          { }
           {editingExam && (
             <Dialog open={!!editingExam} onOpenChange={() => setEditingExam(null)}>
               <DialogContent className="max-w-2xl">
